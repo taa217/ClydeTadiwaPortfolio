@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migrate } from 'drizzle-orm/neon-serverless/migrator';
