@@ -11,7 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "create-admin": "tsx server/scripts/createAdmin.ts"
+    "create-admin": "tsx api/scripts/createAdmin.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
