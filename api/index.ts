@@ -45,54 +45,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Add basic error handling
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  res.status(status).json({ message });
 });
 
-async function main() {
-  try {
-    // Run migrations
-    await migrate(db, {
-      migrationsFolder: path.join(__dirname, 'db', 'migrations')
-    });
-    console.log('Migrations completed successfully');
-  } catch (error) {
-    console.error('Error running migrations:', error);
-    throw error;
-  }
+// Initialize routes
+registerRoutes(app);
 
-  const server = await registerRoutes(app);
+// Serve static files (optional, depending on setup)
+serveStatic(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // Test email configuration
-  const emailConfigValid = await testEmailConfiguration();
-  if (!emailConfigValid) {
-    console.warn('Email configuration is invalid - email notifications will not work');
-  }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
-}
-
-main().catch(console.error);
+// Export as a serverless function for Vercel
+export default app;
