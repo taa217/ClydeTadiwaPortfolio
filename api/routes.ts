@@ -220,4 +220,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Just return the app for Vercel
   return app;
 }
-}
+
