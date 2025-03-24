@@ -48,7 +48,7 @@ export default router;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up session middleware
-  app.use(
+ app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
       resave: false,
@@ -61,7 +61,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     })
   );
-
   // Project routes
   app.get("/api/projects", async (_req, res) => {
     const projects = await storage.getProjects();
@@ -214,9 +213,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // THIS IS THE MODIFIED PART - Create HTTP server conditionally
-  const httpServer = process.env.NODE_ENV !== 'production' 
-    ? createServer(app)
-    : null as unknown as Server; // Type hack for Vercel environment
+ if (process.env.NODE_ENV !== 'production') {
+    return createServer(app);
+  }
   
-  return httpServer;
+  // Just return the app for Vercel
+  return app;
+}
 }
