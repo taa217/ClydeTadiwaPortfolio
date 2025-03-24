@@ -1,22 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { migrate } from 'drizzle-orm/neon-serverless/migrator';
-import { db } from './db';
+import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import 'dotenv/config';
-import { checkDatabaseConnection } from "./db";
-import { testEmailConfiguration } from './email';
 
+// Setup for __dirname equivalent in ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Create Express app
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req: VercelRequest, res: VercelResponse, next: NextFunction) => {
+// Logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -39,25 +37,42 @@ app.use((req: VercelRequest, res: VercelResponse, next: NextFunction) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
   next();
 });
 
+// Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Server error:', err);
   const status = err.status || err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 
   res.status(status).json({ message });
 });
 
-// Initialize routes
-registerRoutes(app);
+// Health check endpoint
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
-// Serve static files (optional, depending on setup)
-serveStatic(app);
+// Initialize routes - remove the HTTP server creation since Vercel manages that
+let routePromise = registerRoutes(app).catch(err => {
+  console.error('Failed to register routes:', err);
+  throw err;
+});
 
-// Export as a serverless function for Vercel
+// For local development only
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  routePromise.then(server => {
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  });
+}
+
+// Export the Express app for Vercel
 export default app;
