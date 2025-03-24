@@ -3,17 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": null,
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
   ]
 }
