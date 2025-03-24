@@ -1,28 +1,20 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "dist/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "nodeVersion": "20.x"
-      }
-    },
-    {
-      "src": "client/public/**",
-      "use": "@vercel/static"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": null,
+  "outputDirectory": "dist",
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "dist/index.js"
+      "dest": "/api/$1"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "client/public/$1"
+      "dest": "/index.html"
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
-} 
+  ]
+}
