@@ -1,9 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { registerRoutes } from "./routes";
 import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { registerRoutes } from "./routes";
 
 // Setup for __dirname equivalent in ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,6 +43,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// Health check endpoint
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Initialize routes - this needs to be await-ed for Vercel
+registerRoutes(app).catch(err => {
+  console.error('Failed to register routes:', err);
+});
+
 // Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Server error:', err);
@@ -53,24 +62,11 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
-// Health check endpoint
-app.get('/api/health', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-// Initialize routes - remove the HTTP server creation since Vercel manages that
-let routePromise = registerRoutes(app).catch(err => {
-  console.error('Failed to register routes:', err);
-  throw err;
-});
-
 // For local development only
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
-  routePromise.then(server => {
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
