@@ -213,6 +213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
+  // THIS IS THE MODIFIED PART - Create HTTP server conditionally
+  const httpServer = process.env.NODE_ENV !== 'production' 
+    ? createServer(app)
+    : null as unknown as Server; // Type hack for Vercel environment
+  
   return httpServer;
 }
