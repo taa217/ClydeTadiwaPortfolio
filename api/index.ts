@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.ts";
 
 // Setup for __dirname equivalent in ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
