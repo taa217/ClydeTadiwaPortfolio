@@ -15,7 +15,7 @@ if (!process.env.DATABASE_URL) {
 // Create the connection pool using the DATABASE_URL connection string
 // SSL configuration is typically handled within the connection string provided by Neon
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL, 
+  connectionString: "postgres://neondb_owner:npg_zuHosQyVC8Y4@ep-square-river-a8lg22xl.eastus2.azure.neon.tech/neondb?sslmode=require", 
   // You might consider slightly increasing the connection timeout if needed
   connectionTimeoutMillis: 15000, // e.g., 15 seconds 
 
