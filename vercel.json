@@ -10,9 +10,7 @@
     }
   },
   "rewrites": [
-    // Route all /api/* to the single index function
-    { "source": "/api/(.*)", "destination": "/api/index.ts" }, 
-    // Frontend SPA fallback
+   { "source": "/api/(.*)", "destination": "/api/index.ts" }, 
     { "source": "/(.*)", "destination": "/dist/public/index.html" } 
   ]
 }
