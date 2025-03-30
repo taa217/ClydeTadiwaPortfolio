@@ -1,5 +1,5 @@
-import { storage } from "./storage";
-import { sendEmail } from "./email"; // Import the email sending function
+import { storage } from "./storage.js";
+import { sendEmail } from "./email.js"; // Import the email sending function
 
 export async function notifyNewBlogPost(postId: number) {
   try {
