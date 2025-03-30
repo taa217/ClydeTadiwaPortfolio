@@ -284,6 +284,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // Create a new project
   app.post("/projects", requireAuth, async (req, res) => { // Path: /projects
+    console.log('HANDLER /projects: req.path =', _req.path); 
+  console.log('HANDLER /projects: req.originalUrl =', _req.originalUrl);
     try {
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
