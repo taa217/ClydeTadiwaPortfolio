@@ -1,8 +1,8 @@
-import { db } from './db';
-import { projects, posts, admins, subscribers } from './db/schema';
+import { db } from './db.js';
+import { projects, posts, admins, subscribers } from './db/schema.js';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import type { Project, BlogPost, InsertProject, InsertBlogPost, Admin, LoginCredentials } from "@shared/schema";
+import type { Project, BlogPost, InsertProject, InsertBlogPost, Admin, LoginCredentials } from "@shared/schema.js";
 import NodeCache from 'node-cache';
 
 // Initialize cache with 5 minutes standard TTL
