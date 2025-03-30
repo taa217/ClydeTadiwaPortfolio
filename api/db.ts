@@ -18,7 +18,9 @@ const pool = new pg.Pool({
   connectionString: "postgres://neondb_owner:npg_zuHosQyVC8Y4@ep-square-river-a8lg22xl.eastus2.azure.neon.tech/neondb?sslmode=require", 
   // You might consider slightly increasing the connection timeout if needed
   connectionTimeoutMillis: 15000, // e.g., 15 seconds 
-
+ssl: {
+    rejectUnauthorized: false // Try this setting
+  },
   // Standard pool settings (adjust as needed based on expected load)
   max: 10, // Max connections per instance (consider Vercel function concurrency)
   idleTimeoutMillis: 30000, // 30 seconds
