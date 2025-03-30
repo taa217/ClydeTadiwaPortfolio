@@ -36,7 +36,7 @@ const router = express.Router();
 const storage = new DbStorage();
 
 // Example route on the standalone router (keep or remove if unused)
-router.get('/posts/:slug', async (req, res) => {
+router.get('/api/posts/:slug', async (req, res) => {
   try {
     const post = await storage.getPostBySlug(req.params.slug);
     if (!post) {
@@ -80,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // === Public Routes ===
 
   // Project routes
-  app.get("/projects", async (_req, res) => { // Path: /projects
+  app.get("/api/projects", async (_req, res) => { // Path: /projects
     try {
       const projects = await storage.getProjects();
       res.json(projects);
@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  app.get("/projects/:id", async (req, res) => { // Path: /projects/:id
+  app.get("/api/projects/:id", async (req, res) => { // Path: /projects/:id
     try {
         const projectId = Number(req.params.id);
         if (isNaN(projectId)) {
@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Blog post routes
-  app.get("/posts", async (_req, res) => { // Path: /posts
+  app.get("/api/posts", async (_req, res) => { // Path: /posts
     try {
         const posts = await storage.getPosts();
         // Only return published posts for public viewing
@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  app.get("/posts/:slug", async (req, res) => { // Path: /posts/:slug
+  app.get("/api/posts/:slug", async (req, res) => { // Path: /posts/:slug
     try {
         const post = await storage.getPostBySlug(req.params.slug);
         // Ensure post exists and is not a draft for public view
@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Subscription route
-  app.post("/subscribe", async (req, res) => { // Path: /subscribe
+  app.post("/api/subscribe", async (req, res) => { // Path: /subscribe
     try {
       const { email } = subscribeSchema.parse(req.body);
       await storage.addSubscriber(email);
@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // === Admin Authentication Routes ===
 
-  app.get("/admin/auth-check", (req, res) => { // Path: /admin/auth-check
+  app.get("/api/admin/auth-check", (req, res) => { // Path: /admin/auth-check
     if (req.session.adminId) {
       return res.status(200).json({ authenticated: true });
     } else {
@@ -166,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  app.post("/admin/login", async (req, res) => { // Path: /admin/login
+  app.post("/api/admin/login", async (req, res) => { // Path: /admin/login
     try {
       const credentials = loginSchema.parse(req.body);
       
@@ -200,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  app.post("/admin/logout", (req, res) => { // Path: /admin/logout
+  app.post("/api/admin/logout", (req, res) => { // Path: /admin/logout
     req.session.destroy((err) => {
         if (err) {
             console.error("Session destruction error during logout:", err);
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // === Protected Admin Routes (requireAuth middleware) ===
 
   // Get all posts (including drafts) for admin view
-  app.get("/admin/posts", requireAuth, async (_req, res) => { // Path: /admin/posts
+  app.get("/api/admin/posts", requireAuth, async (_req, res) => { // Path: /admin/posts
     try {
         const posts = await storage.getPosts();
         res.json(posts);
@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Create a new blog post
-  app.post("/posts", requireAuth, async (req, res) => { // Path: /posts 
+  app.post("/api/posts", requireAuth, async (req, res) => { // Path: /posts 
     try {
       const postData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createPost(postData);
@@ -245,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Update a blog post
-  app.patch("/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
+  app.patch("/api/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
     try {
         const postId = Number(req.params.id);
         if (isNaN(postId)) {
@@ -265,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Delete a blog post
-  app.delete("/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
+  app.delete("/api/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
     try {
         const postId = Number(req.params.id);
         if (isNaN(postId)) {
@@ -283,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Create a new project
-  app.post("/projects", requireAuth, async (req, res) => { // Path: /projects
+  app.post("/api/projects", requireAuth, async (req, res) => { // Path: /projects
     console.log('HANDLER /projects: req.path =', _req.path); 
   console.log('HANDLER /projects: req.originalUrl =', _req.originalUrl);
     try {
@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Delete a project
-  app.delete("/projects/:id", requireAuth, async (req, res) => { // Path: /projects/:id
+  app.delete("/api/projects/:id", requireAuth, async (req, res) => { // Path: /projects/:id
     try {
         const projectId = Number(req.params.id);
          if (isNaN(projectId)) {
