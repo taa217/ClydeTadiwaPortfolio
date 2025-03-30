@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 // createServer is no longer needed for the return type here, but keep if used elsewhere locally
 // import { createServer } from "http"; 
 import { DbStorage } from "./storage.js";
-import { loginSchema, insertBlogPostSchema, type LoginCredentials, insertProjectSchema, type InsertProject } from "@shared/schema.js";
+import { loginSchema, insertBlogPostSchema, type LoginCredentials, insertProjectSchema, type InsertProject } from "../../shared/schema.js";
 import session from "express-session";
 import { z } from "zod";
 import { notifyNewBlogPost, notifyNewProject } from "./notifications.js";
