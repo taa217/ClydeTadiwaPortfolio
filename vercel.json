@@ -5,7 +5,7 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.ts" },
+    { "source": "/api/(.*)", "destination": "/dist/api/index.js" },
     { "source": "/(.*)", "destination": "/dist/public/index.html" }
   ]
 }
