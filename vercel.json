@@ -2,9 +2,18 @@
   "version": 2,
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": "dist/public",
+  "outputDirectory": "dist/public", 
+  "framework": null, // Correct: null or remove line
+  // Explicitly define the ONLY function to build
+  "functions": {
+    "api/index.ts": { 
+      "memory": 1024 // Optional: specify memory
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.ts" },
-    { "source": "/(.*)", "destination": "/dist/public/index.html" }
+    // Route all /api/* to the single index function
+    { "source": "/api/(.*)", "destination": "/api/index.ts" }, 
+    // Frontend SPA fallback
+    { "source": "/(.*)", "destination": "/dist/public/index.html" } 
   ]
 }
