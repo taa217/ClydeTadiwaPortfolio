@@ -3,11 +3,10 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist/public", 
-  "framework": null, // Correct: null or remove line
-  // Explicitly define the ONLY function to build
+  "framework": null, 
   "functions": {
     "api/index.ts": { 
-      "memory": 1024 // Optional: specify memory
+      "memory": 1024 
     }
   },
   "rewrites": [
