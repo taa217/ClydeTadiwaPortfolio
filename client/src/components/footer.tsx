@@ -137,7 +137,7 @@ export default function Footer() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Stay updated with our latest projects and articles.
+                Stay updated with my latest projects and articles.
               </p>
             </form>
           </motion.div>
