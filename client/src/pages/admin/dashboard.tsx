@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
 
   const { data: posts, isLoading: isLoadingPosts } = useQuery<BlogPost[]>({
-    queryKey: ["/api/admin/posts"],
+    queryKey: ["/api/posts"],
   });
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery<Project[]>({
