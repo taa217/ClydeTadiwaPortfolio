@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // === Protected Admin Routes (requireAuth middleware) ===
 
   // Get all posts (including drafts) for admin view
-  app.get("/api/admin/posts", requireAuth, async (_req, res) => { // Path: /admin/posts
+  app.get("/api/posts", requireAuth, async (_req, res) => { // Path: /admin/posts
     try {
         const posts = await storage.getPosts();
         res.json(posts);
