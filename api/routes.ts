@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   // Blog post routes
-  app.get("/api/posts", async (_req, res) => { // Path: /posts
+  app.get("/api/admin/posts", async (_req, res) => { // Path: /posts
     try {
         const posts = await storage.getPosts();
         // Only return published posts for public viewing
