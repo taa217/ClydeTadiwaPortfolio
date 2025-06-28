@@ -107,15 +107,15 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  // Blog post routes
-  app.get("/api/admin/posts", async (_req, res) => { // Path: /posts
+  // Blog post routes - Public API for published posts
+  app.get("/api/posts", async (_req, res) => { // Public route for published posts
     try {
         const posts = await storage.getPosts();
         // Only return published posts for public viewing
         const publishedPosts = posts.filter(post => !post.isDraft);
         res.json(publishedPosts);
     } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching published posts:', error);
         res.status(500).json({ message: 'Failed to fetch posts' });
     }
   });
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // === Protected Admin Routes (requireAuth middleware) ===
 
   // Get all posts (including drafts) for admin view
-  app.get("/api/posts", requireAuth, async (_req, res) => { // Path: /admin/posts
+  app.get("/api/admin/posts", requireAuth, async (_req, res) => { // Path: /admin/posts - all posts including drafts
     try {
         const posts = await storage.getPosts();
         res.json(posts);
