@@ -126,7 +126,7 @@ export default function BlogPostPage() {
         <div className="flex items-center gap-2 text-muted-foreground mb-4" itemProp="author" itemScope itemType="http://schema.org/Person">
           <div className="rounded-full overflow-hidden w-8 h-8 relative">
             <img
-              src="/attached_assets/ceo1.jpg"
+              src="/assets/ceo1.jpg"
               alt="Clyde Tadiwa"
               className="object-cover w-full h-full"
             />
