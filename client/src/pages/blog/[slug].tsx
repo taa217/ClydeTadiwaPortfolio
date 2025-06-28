@@ -151,10 +151,17 @@ export default function BlogPostPage() {
           </div>
         </div>
         <img
-          src={post.coverImage}
+          src={post.coverImage || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=600&fit=crop&crop=center'}
           alt={post.title}
           className="w-full aspect-video object-cover rounded-lg mb-8"
           itemProp="image"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (target.src !== 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=600&fit=crop&crop=center') {
+              target.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=600&fit=crop&crop=center';
+            }
+          }}
+          loading="lazy"
         />
         <div 
           className="prose prose-lg prose-slate max-w-none"
