@@ -17,14 +17,9 @@ declare module "express-session" {
 
 // Middleware to check if user is authenticated
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  console.log('Auth check - Session:', req.session);
-  console.log('Auth check - AdminId:', req.session.adminId);
-  
   if (!req.session.adminId) {
-    console.log('Auth failed - No adminId in session');
     return res.status(401).json({ message: "Unauthorized" });
   }
-  console.log('Auth success - Proceeding');
   next();
 };
 
@@ -66,19 +61,22 @@ export default router;
  */
 export async function registerRoutes(app: Express): Promise<void> { // Corrected return type
   
-  // Set up session middleware
+  // Set up session middleware - Optimized for Vercel serverless
   app.use(
     session({
-      // Use environment variable for secret in production
-      secret: process.env.SESSION_SECRET || 'your-development-secret-key', 
+      secret: process.env.SESSION_SECRET || 'your-development-secret-key-change-in-production', 
       resave: false,
       saveUninitialized: false,
+      name: 'sessionId', // Custom session name
       cookie: { 
-        secure: process.env.NODE_ENV === 'production', // Set secure flag in production
-        httpOnly: true, // Prevent client-side JS access
-        sameSite: 'lax', // Good default for CSRF protection
-        maxAge: 24 * 60 * 60 * 1000 // Cookie expiry: 24 hours
-      }
+        secure: false, // Set to false for now to work with both HTTP and HTTPS
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+      },
+      // Force session to be saved even if unmodified
+      rolling: true
     })
   );
 
@@ -231,8 +229,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // === Protected Admin Routes (requireAuth middleware) ===
 
-  // Create a new blog post - TEMPORARILY REMOVED AUTH FOR TESTING
-  app.post("/api/posts", async (req, res) => { // Path: /posts 
+  // Create a new blog post
+  app.post("/api/posts", requireAuth, async (req, res) => { // Path: /posts 
     try {
       const postData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createPost(postData);
@@ -288,8 +286,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
-  // Create a new project - TEMPORARILY REMOVED AUTH FOR TESTING
-  app.post("/api/projects", async (req, res) => { // Path: /projects
+  // Create a new project
+  app.post("/api/projects", requireAuth, async (req, res) => { // Path: /projects
     console.log('HANDLER /projects: req.path =', req.path); 
   console.log('HANDLER /projects: req.originalUrl =', req.originalUrl);
     try {
