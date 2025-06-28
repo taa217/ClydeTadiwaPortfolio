@@ -290,8 +290,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // Create a new project - TEMPORARILY REMOVED AUTH FOR TESTING
   app.post("/api/projects", async (req, res) => { // Path: /projects
-    console.log('HANDLER /projects: req.path =', _req.path); 
-  console.log('HANDLER /projects: req.originalUrl =', _req.originalUrl);
+    console.log('HANDLER /projects: req.path =', req.path); 
+  console.log('HANDLER /projects: req.originalUrl =', req.originalUrl);
     try {
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
