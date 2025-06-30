@@ -5,7 +5,6 @@ import { DbStorage } from "./storage.js";
 import { loginSchema, insertBlogPostSchema, type LoginCredentials, insertProjectSchema, type InsertProject } from "../shared/schema.js";
 import { z } from "zod";
 import { notifyNewBlogPost, notifyNewProject } from "./notifications.js";
-import { testEmailConfiguration, checkGmailSetup, sendEmail } from "./email.js";
 import express from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -231,83 +230,6 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     // With JWT, logout is handled client-side by removing the token
     // No server-side state to clean up
     res.json({ message: "Logged out successfully" });
-  });
-
-  // Test email configuration endpoint
-  app.post("/api/admin/test-email", requireAuth, async (req, res) => { // Path: /admin/test-email
-    try {
-      console.log('Testing email configuration...');
-      
-      // Check Gmail setup first
-      const setupCheck = await checkGmailSetup();
-      console.log('Gmail setup check:', setupCheck);
-      
-      // Test connection
-      const isConfigValid = await testEmailConfiguration();
-      console.log('Email config test result:', isConfigValid);
-      
-      if (!setupCheck.isValid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: setupCheck.message,
-          details: 'Gmail configuration issue detected'
-        });
-      }
-      
-      if (!isConfigValid) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Email configuration test failed',
-          details: 'Unable to connect to Gmail SMTP server'
-        });
-      }
-      
-      // Send a test email to the admin
-      const testEmailBody = {
-        to: 'clydetadiwa8@gmail.com', // Send test email to yourself
-        subject: '✅ Email Configuration Test - Success!',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #28a745;">Email Configuration Test Successful!</h2>
-            <p>This is a test email to confirm that your email notification system is working correctly.</p>
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-              <h3>Test Details:</h3>
-              <ul>
-                <li><strong>Time:</strong> ${new Date().toISOString()}</li>
-                <li><strong>Server:</strong> Vercel Serverless Function</li>
-                <li><strong>Email Service:</strong> Gmail SMTP</li>
-              </ul>
-            </div>
-            <p style="color: #6c757d; font-size: 14px;">
-              If you received this email, your notification system is working properly and subscribers will receive notifications when you publish new posts or projects.
-            </p>
-          </div>
-        `
-      };
-      
-      console.log('Sending test email...');
-      await sendEmail(testEmailBody);
-      console.log('Test email sent successfully');
-      
-      res.json({ 
-        success: true, 
-        message: 'Email configuration test passed! Check your inbox for the test email.',
-        details: {
-          setupCheck: setupCheck.message,
-          connectionTest: 'Passed',
-          testEmailSent: true
-        }
-      });
-      
-    } catch (error) {
-      console.error('Email test failed:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Email test failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: 'Check Vercel logs for more details'
-      });
-    }
   });
 
   // === Protected Admin Routes (requireAuth middleware) ===
