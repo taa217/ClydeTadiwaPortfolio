@@ -84,7 +84,7 @@ export async function notifyNewBlogPost(postId: number) {
 
   } catch (error) {
     console.error("Error notifying subscribers about new blog post:", error);
-    throw error; // Re-throw to ensure the error is visible in Vercel logs
+    // Don't throw error - email failures shouldn't prevent post creation
   }
 }
 
@@ -171,6 +171,6 @@ export async function notifyNewProject(projectId: number) {
 
   } catch (error) {
     console.error("Error notifying subscribers about new project:", error);
-    throw error; // Re-throw to ensure the error is visible in Vercel logs
+    // Don't throw error - email failures shouldn't prevent project creation
   }
 } 
