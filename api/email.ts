@@ -3,7 +3,7 @@ import Mail from 'nodemailer/lib/mailer';
 
 // Create a transporter object optimized for serverless environments
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false, // true for 465, false for other ports
