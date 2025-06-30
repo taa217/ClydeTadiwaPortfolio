@@ -17,9 +17,19 @@ declare module "express-session" {
 
 // Middleware to check if user is authenticated
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  console.log('🔐 Auth Check:', {
+    sessionId: req.sessionID,
+    adminId: req.session.adminId,
+    session: req.session,
+    cookies: req.headers.cookie
+  });
+  
   if (!req.session.adminId) {
+    console.log('❌ Auth failed - No adminId in session');
     return res.status(401).json({ message: "Unauthorized" });
   }
+  
+  console.log('✅ Auth success - Proceeding');
   next();
 };
 
@@ -196,11 +206,16 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
       if (credentials.username === adminUser && credentials.password === adminPass) {
         req.session.adminId = 1; // Use a non-guessable ID or user object if you have multiple admins
+        console.log('🔑 Setting session - AdminId:', req.session.adminId);
+        console.log('🔑 Session before save:', req.session);
+        
         req.session.save((err) => { // Explicitly save session before responding
             if (err) {
-                console.error("Session save error during login:", err);
+                console.error("❌ Session save error during login:", err);
                 return res.status(500).json({ message: "Login failed" });
             }
+            console.log('✅ Session saved successfully');
+            console.log('🔑 Session after save:', req.session);
             return res.json({ message: "Logged in successfully" });
         });
       } else {
