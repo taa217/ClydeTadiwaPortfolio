@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, LogOut } from "lucide-react";
 import { format } from "date-fns";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, removeToken } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { BlogPost, Project } from "@shared/schema";
 import { useEffect, useState } from "react";
@@ -23,6 +23,22 @@ export default function AdminDashboard() {
   });
 
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest("POST", "/api/admin/logout");
+      removeToken();
+      toast({
+        title: "Success",
+        description: "Logged out successfully"
+      });
+      navigate("/admin");
+    } catch (error) {
+      // Even if the API call fails, remove the token and redirect
+      removeToken();
+      navigate("/admin");
+    }
+  };
 
   const handleDeletePost = async (id: number) => {
     setIsDeleting(id);
@@ -102,7 +118,15 @@ export default function AdminDashboard() {
   return (
     <div className="py-12">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Blog Posts</h1>
+        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+      
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold">Blog Posts</h2>
         <Button onClick={() => navigate("/admin/posts/new")}>
           <Plus className="w-4 h-4 mr-2" />
           New Post
@@ -165,7 +189,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex justify-between items-center mt-16 mb-8">
-        <h1 className="text-4xl font-bold">Projects</h1>
+        <h2 className="text-2xl font-bold">Projects</h2>
         <Button onClick={() => navigate("/admin/projects/new")}>
           <Plus className="w-4 h-4 mr-2" />
           New Project

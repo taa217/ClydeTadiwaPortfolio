@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginCredentials } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, setToken } from "@/lib/queryClient";
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -23,12 +23,19 @@ export default function AdminLogin() {
 
   async function onSubmit(data: LoginCredentials) {
     try {
-      await apiRequest("POST", "/api/admin/login", data);
-      toast({
-        title: "Success",
-        description: "Logged in successfully"
-      });
-      navigate("/admin/dashboard");
+      const response = await apiRequest("POST", "/api/admin/login", data);
+      
+      // Store the JWT token
+      if (response.token) {
+        setToken(response.token);
+        toast({
+          title: "Success",
+          description: "Logged in successfully"
+        });
+        navigate("/admin/dashboard");
+      } else {
+        throw new Error("No token received");
+      }
     } catch (error) {
       toast({
         title: "Error",

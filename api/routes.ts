@@ -3,33 +3,47 @@ import type { Express, Request, Response, NextFunction } from "express";
 // import { createServer } from "http"; 
 import { DbStorage } from "./storage.js";
 import { loginSchema, insertBlogPostSchema, type LoginCredentials, insertProjectSchema, type InsertProject } from "../shared/schema.js";
-import session from "express-session";
 import { z } from "zod";
 import { notifyNewBlogPost, notifyNewProject } from "./notifications.js";
 import express from 'express';
+import jwt from 'jsonwebtoken';
 
-// Augment express-session types
-declare module "express-session" {
-  interface SessionData {
-    adminId?: number;
+// JWT utilities
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-change-in-production';
+const JWT_EXPIRES_IN = '24h';
+
+const generateToken = (adminId: number): string => {
+  return jwt.sign({ adminId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+};
+
+const verifyToken = (token: string): { adminId: number } | null => {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { adminId: number };
+  } catch (error) {
+    return null;
   }
-}
+};
 
-// Middleware to check if user is authenticated
+// Middleware to check if user is authenticated via JWT
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  console.log('🔐 Auth Check:', {
-    sessionId: req.sessionID,
-    adminId: req.session.adminId,
-    session: req.session,
-    cookies: req.headers.cookie
-  });
+  const authHeader = req.headers.authorization;
   
-  if (!req.session.adminId) {
-    console.log('❌ Auth failed - No adminId in session');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('❌ Auth failed - No authorization header or invalid format');
     return res.status(401).json({ message: "Unauthorized" });
   }
   
-  console.log('✅ Auth success - Proceeding');
+  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+  const payload = verifyToken(token);
+  
+  if (!payload) {
+    console.log('❌ Auth failed - Invalid or expired token');
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  console.log('✅ Auth success - Valid token for adminId:', payload.adminId);
+  // Add adminId to request for use in protected routes
+  (req as any).adminId = payload.adminId;
   next();
 };
 
@@ -71,25 +85,6 @@ export default router;
  */
 export async function registerRoutes(app: Express): Promise<void> { // Corrected return type
   
-  // Set up session middleware - Optimized for Vercel serverless
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'your-development-secret-key-change-in-production', 
-      resave: false,
-      saveUninitialized: false,
-      name: 'sessionId', // Custom session name
-      cookie: { 
-        secure: false, // Set to false for now to work with both HTTP and HTTPS
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined
-      },
-      // Force session to be saved even if unmodified
-      rolling: true
-    })
-  );
-
   // === Public Routes ===
 
   // Project routes
@@ -182,13 +177,20 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // === Admin Authentication Routes ===
 
   app.get("/api/admin/auth-check", (req, res) => { // Path: /admin/auth-check
-    if (req.session.adminId) {
-      return res.status(200).json({ authenticated: true });
-    } else {
-      // Intentionally return 200 OK but indicate not authenticated
-      // Or return 401 if you prefer - depends on frontend handling
-      return res.status(200).json({ authenticated: false }); 
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(200).json({ authenticated: false });
     }
+    
+    const token = authHeader.substring(7);
+    const payload = verifyToken(token);
+    
+    if (!payload) {
+      return res.status(200).json({ authenticated: false });
+    }
+    
+    return res.status(200).json({ authenticated: true });
   });
 
   app.post("/api/admin/login", async (req, res) => { // Path: /admin/login
@@ -205,18 +207,12 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       }
 
       if (credentials.username === adminUser && credentials.password === adminPass) {
-        req.session.adminId = 1; // Use a non-guessable ID or user object if you have multiple admins
-        console.log('🔑 Setting session - AdminId:', req.session.adminId);
-        console.log('🔑 Session before save:', req.session);
+        const token = generateToken(1); // Use admin ID 1
+        console.log('🔑 Generated JWT token for admin login');
         
-        req.session.save((err) => { // Explicitly save session before responding
-            if (err) {
-                console.error("❌ Session save error during login:", err);
-                return res.status(500).json({ message: "Login failed" });
-            }
-            console.log('✅ Session saved successfully');
-            console.log('🔑 Session after save:', req.session);
-            return res.json({ message: "Logged in successfully" });
+        return res.json({ 
+          message: "Logged in successfully",
+          token: token
         });
       } else {
          return res.status(401).json({ message: "Invalid credentials" });
@@ -231,15 +227,9 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   });
 
   app.post("/api/admin/logout", (req, res) => { // Path: /admin/logout
-    req.session.destroy((err) => {
-        if (err) {
-            console.error("Session destruction error during logout:", err);
-            return res.status(500).json({ message: "Logout failed" });
-        }
-      // Clear cookie manually if needed, although destroy should handle it
-      // res.clearCookie('connect.sid'); // Use the actual session cookie name if different
-      res.json({ message: "Logged out successfully" });
-    });
+    // With JWT, logout is handled client-side by removing the token
+    // No server-side state to clean up
+    res.json({ message: "Logged out successfully" });
   });
 
   // === Protected Admin Routes (requireAuth middleware) ===
