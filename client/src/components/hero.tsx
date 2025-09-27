@@ -60,7 +60,7 @@ export default function Hero() {
             that make a difference.
           </p>
           <div className="flex gap-4">
-            <Link href="/blog/about-me-clyde">
+            <Link href="/blog/about-me-clyde-tadiwa">
               <Button>About Me</Button>
             </Link>
             <Link href="/projects">
