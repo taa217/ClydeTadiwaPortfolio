@@ -17,6 +17,7 @@ export interface IStorage {
   getProjects(): Promise<Project[]>;
   getProject(id: number): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, updates: Partial<InsertProject>): Promise<Project>;
   getPosts(): Promise<BlogPost[]>;
   getPost(id: number): Promise<BlogPost | undefined>;
   getPostBySlug(slug: string): Promise<BlogPost | undefined>;
@@ -191,10 +192,42 @@ export class DbStorage implements IStorage {
   }
 
   async createPost(post: InsertBlogPost): Promise<BlogPost> {
+    // Ensure slug exists; generate from title if missing/blank, and make it unique
+    const slugify = (input: string): string =>
+      input
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .replace(/--+/g, "-");
+
+    const providedSlug = (post.slug || "").trim();
+    const baseSlug = slugify(providedSlug.length > 0 ? providedSlug : post.title);
+
+    let uniqueSlug = baseSlug;
+    let suffix = 1;
+    // Try to make the slug unique by appending -1, -2, ... if needed
+    // Limit attempts to avoid infinite loops
+    while (true) {
+      const exists = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(eq(posts.slug, uniqueSlug))
+        .limit(1);
+      if (!exists.length) break;
+      uniqueSlug = `${baseSlug}-${suffix++}`;
+      if (suffix > 100) {
+        throw new Error("Unable to generate unique slug");
+      }
+    }
+
     const result = await this.withRetry(async () => {
-      const [created] = await db.insert(posts)
+      const [created] = await db
+        .insert(posts)
         .values({
           ...post,
+          slug: uniqueSlug,
+          tags: post.tags ?? [],
           publishedAt: new Date(post.publishedAt)
         })
         .returning();
@@ -237,6 +270,32 @@ export class DbStorage implements IStorage {
 
   async deletePost(id: number): Promise<void> {
     await db.delete(posts).where(eq(posts.id, id));
+  }
+
+  async updateProject(id: number, updates: Partial<InsertProject>): Promise<Project> {
+    const [updated] = await db
+      .update(projects)
+      .set({
+        ...updates,
+      })
+      .where(eq(projects.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new Error("Project not found");
+    }
+
+    // Invalidate caches related to projects
+    this.invalidateCache('project');
+    this.invalidateCache(`project_${id}`);
+    this.invalidateCache('all_projects');
+
+    return {
+      ...updated,
+      createdAt: updated.createdAt.toISOString(),
+      liveUrl: updated.liveUrl || undefined,
+      githubUrl: updated.githubUrl || undefined,
+    };
   }
 
   async validateAdmin(credentials: LoginCredentials): Promise<Admin | null> {

@@ -12,7 +12,7 @@ import { insertBlogPostSchema, type InsertBlogPost, type BlogPost } from "@share
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function PostEditor() {
   const [, navigate] = useLocation();
@@ -22,7 +22,7 @@ export default function PostEditor() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: post } = useQuery<BlogPost>({
-    queryKey: ["/api/posts", id],
+    queryKey: isEditing ? [`/api/admin/posts/${id}`] : ["/api/admin/posts"],
     enabled: isEditing,
   });
 
@@ -35,6 +35,23 @@ export default function PostEditor() {
       }
     }
   });
+
+  // Rehydrate form when editing and data loads
+  useEffect(() => {
+    if (isEditing && post) {
+      form.reset({
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        coverImage: post.coverImage,
+        tags: post.tags ?? [],
+        isDraft: post.isDraft ?? false,
+        publishedAt: post.publishedAt,
+        content: post.content || ""
+      });
+      editor?.commands.setContent(post.content || "");
+    }
+  }, [isEditing, post, form, editor]);
 
   const form = useForm<InsertBlogPost>({
     resolver: zodResolver(insertBlogPostSchema),
@@ -54,6 +71,9 @@ export default function PostEditor() {
     setIsSubmitting(true);
     try {
       data.content = editor?.getHTML() || "";
+      // Ensure arrays/optionals are present
+      // @ts-expect-error zod default handles missing fields, but enforce at runtime too
+      data.tags = (data as any).tags ?? [];
 
       if (isEditing) {
         await apiRequest("PATCH", `/api/posts/${id}`, data);

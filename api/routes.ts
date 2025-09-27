@@ -155,6 +155,24 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
+  // Admin get single post by id (includes drafts)
+  app.get("/api/admin/posts/:id", requireAuth, async (req, res) => { // Path: /admin/posts/:id
+    try {
+      const postId = Number(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error(`Error fetching admin post ${req.params.id}:`, error);
+      res.status(500).json({ message: 'Failed to fetch post' });
+    }
+  });
+
   // Subscription route
   app.post("/api/subscribe", async (req, res) => { // Path: /subscribe
     try {
@@ -387,6 +405,32 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       }
       console.error('Error creating project:', error);
       res.status(500).json({ message: "Failed to create project" });
+    }
+  });
+
+  // Update a project
+  app.patch("/api/projects/:id", requireAuth, async (req, res) => { // Path: /projects/:id
+    try {
+      const projectId = Number(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+
+      // Validate incoming body partially using insertProjectSchema by making all fields optional
+      const partialSchema = insertProjectSchema.partial();
+      const updates = partialSchema.parse(req.body);
+
+      const updated = await storage.updateProject(projectId, updates);
+      res.json(updated);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid project data", errors: error.errors });
+      }
+      if (error.message && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      console.error(`Error updating project ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to update project" });
     }
   });
 

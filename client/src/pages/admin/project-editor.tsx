@@ -12,7 +12,7 @@ import { insertProjectSchema, type InsertProject, type Project } from "@shared/s
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ProjectEditor() {
   const [, navigate] = useLocation();
@@ -23,7 +23,7 @@ export default function ProjectEditor() {
 
   // Fetch project data if editing
   const { data: project } = useQuery<Project>({
-    queryKey: ["/api/projects", id],
+    queryKey: isEditing ? [`/api/projects/${id}`] : ["/api/projects"],
     enabled: isEditing,
   });
 
@@ -42,6 +42,20 @@ export default function ProjectEditor() {
       githubUrl: project?.githubUrl || "",
     }
   });
+
+  useEffect(() => {
+    if (isEditing && project) {
+      form.reset({
+        title: project.title,
+        description: project.description,
+        imageUrl: project.imageUrl,
+        technologies: project.technologies ?? [],
+        technologiesInput: (project.technologies ?? []).join(', '),
+        liveUrl: project.liveUrl || "",
+        githubUrl: project.githubUrl || "",
+      });
+    }
+  }, [isEditing, project, form]);
 
   async function onSubmit(formData: InsertProject & { technologiesInput: string }) {
     setIsSubmitting(true);
