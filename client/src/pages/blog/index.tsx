@@ -31,7 +31,7 @@ export default function BlogIndex() {
         <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl('/blog')} />
       </Helmet>
-      <h1 className="text-4xl font-bold mb-8">Blogs</h1>
+      <h1 className="text-4xl font-bold mb-8">My Thoughts</h1>
       <div className="grid md:grid-cols-2 gap-8">
         {isLoading ? (
           Array.from({ length: 2 }).map((_, i) => (
