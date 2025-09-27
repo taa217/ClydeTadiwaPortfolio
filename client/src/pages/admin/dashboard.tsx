@@ -42,15 +42,26 @@ export default function AdminDashboard() {
 
   const handleDeletePost = async (id: number) => {
     setIsDeleting(id);
+    // Optimistic update: snapshot current posts
+    const queryKey = ["/api/admin/posts"] as const;
+    const previous = queryClient.getQueryData<BlogPost[]>(queryKey);
+    if (previous) {
+      queryClient.setQueryData<BlogPost[]>(queryKey, previous.filter(p => p.id !== id));
+    }
     try {
       await apiRequest("DELETE", `/api/posts/${id}`);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      // Ensure server state refetches
+      queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       toast({
         title: "Success",
         description: "Post deleted successfully"
       });
     } catch (error) {
+      // Revert optimistic update on error
+      if (previous) {
+        queryClient.setQueryData<BlogPost[]>(queryKey, previous);
+      }
       toast({
         title: "Error",
         description: "Failed to delete post",
@@ -63,14 +74,23 @@ export default function AdminDashboard() {
 
   const handleDeleteProject = async (id: number) => {
     setIsDeleting(id);
+    // Optimistic update: snapshot current projects
+    const queryKey = ["/api/projects"] as const;
+    const previous = queryClient.getQueryData<Project[]>(queryKey);
+    if (previous) {
+      queryClient.setQueryData<Project[]>(queryKey, previous.filter(p => p.id !== id));
+    }
     try {
       await apiRequest("DELETE", `/api/projects/${id}`);
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Success",
         description: "Project deleted successfully"
       });
     } catch (error) {
+      if (previous) {
+        queryClient.setQueryData<Project[]>(queryKey, previous);
+      }
       toast({
         title: "Error",
         description: "Failed to delete project",

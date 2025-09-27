@@ -261,6 +261,10 @@ export class DbStorage implements IStorage {
       throw new Error("Post not found");
     }
     
+    // Invalidate caches related to posts
+    this.invalidateCache('post');
+    this.invalidateCache(`post_${id}`);
+
     return {
       ...updatedPost,
       createdAt: updatedPost.createdAt.toISOString(),
@@ -269,7 +273,18 @@ export class DbStorage implements IStorage {
   }
 
   async deletePost(id: number): Promise<void> {
-    await db.delete(posts).where(eq(posts.id, id));
+    const deleted = await db
+      .delete(posts)
+      .where(eq(posts.id, id))
+      .returning();
+
+    if (!deleted.length) {
+      throw new Error('Post not found');
+    }
+
+    // Invalidate caches related to posts
+    this.invalidateCache('post');
+    this.invalidateCache(`post_${id}`);
   }
 
   async updateProject(id: number, updates: Partial<InsertProject>): Promise<Project> {
