@@ -36,6 +36,20 @@ export default function PostEditor() {
     }
   });
 
+  const form = useForm<InsertBlogPost>({
+    resolver: zodResolver(insertBlogPostSchema),
+    defaultValues: {
+      title: post?.title || "",
+      slug: post?.slug || "",
+      excerpt: post?.excerpt || "",
+      coverImage: post?.coverImage || "",
+      tags: post?.tags || [],
+      isDraft: post?.isDraft || false, // Changed default to false
+      publishedAt: post?.publishedAt || new Date().toISOString(),
+      content: post?.content || ""
+    }
+  });
+
   // Rehydrate form when editing and data loads
   useEffect(() => {
     if (isEditing && post) {
@@ -52,20 +66,6 @@ export default function PostEditor() {
       editor?.commands.setContent(post.content || "");
     }
   }, [isEditing, post, form, editor]);
-
-  const form = useForm<InsertBlogPost>({
-    resolver: zodResolver(insertBlogPostSchema),
-    defaultValues: {
-      title: post?.title || "",
-      slug: post?.slug || "",
-      excerpt: post?.excerpt || "",
-      coverImage: post?.coverImage || "",
-      tags: post?.tags || [],
-      isDraft: post?.isDraft || false, // Changed default to false
-      publishedAt: post?.publishedAt || new Date().toISOString(),
-      content: post?.content || ""
-    }
-  });
 
   async function onSubmit(data: InsertBlogPost) {
     setIsSubmitting(true);
