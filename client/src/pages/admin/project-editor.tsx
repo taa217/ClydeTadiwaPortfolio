@@ -13,6 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 export default function ProjectEditor() {
   const [, navigate] = useLocation();
@@ -103,6 +104,9 @@ export default function ProjectEditor() {
 
   return (
     <div className="py-12">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <Card>
         <CardContent className="p-6">
           <h1 className="text-3xl font-bold mb-8">

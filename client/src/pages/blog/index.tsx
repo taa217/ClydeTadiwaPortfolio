@@ -2,6 +2,8 @@ import BlogCard from "@/components/blog-card";
 import { useQuery } from "@tanstack/react-query";
 import type { BlogPost } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
+import { site, absoluteUrl } from "@/lib/seo";
 
 const BlogCardSkeleton = () => (
   <div className="w-full">
@@ -19,6 +21,16 @@ export default function BlogIndex() {
 
   return (
     <div className="py-12">
+      <Helmet>
+        <title>{`Thoughts · ${site.name}`}</title>
+        <meta name="description" content={`Blog posts by ${site.name}`} />
+        <link rel="canonical" href={absoluteUrl('/blog')} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={`Thoughts · ${site.name}`} />
+        <meta property="og:description" content={`Blog posts by ${site.name}`} />
+        <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
+        <meta property="og:url" content={absoluteUrl('/blog')} />
+      </Helmet>
       <h1 className="text-4xl font-bold mb-8">Blogs</h1>
       <div className="grid md:grid-cols-2 gap-8">
         {isLoading ? (

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
+import { absoluteUrl, buildJsonLdBlogPosting, site } from "@/lib/seo";
 
 const BlogPostSkeleton = () => (
   <div className="max-w-none">
@@ -119,6 +121,27 @@ export default function BlogPostPage() {
 
   return (
     <div className="max-w-none" itemScope itemType="http://schema.org/Article">
+      <Helmet>
+        <title>{`${post.title} · ${site.name}`}</title>
+        <meta name="description" content={post.excerpt} />
+        <link rel="canonical" href={absoluteUrl(`/blog/${post.slug}`)} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={post.title} />
+        <meta property="og:description" content={post.excerpt} />
+        <meta property="og:image" content={absoluteUrl(post.coverImage || site.defaultImage)} />
+        <meta property="og:url" content={absoluteUrl(`/blog/${post.slug}`)} />
+        <meta property="article:published_time" content={post.publishedAt} />
+        {post.tags?.length ? <meta name="keywords" content={post.tags.join(', ')} /> : null}
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdBlogPosting({
+          title: post.title,
+          slug: post.slug,
+          description: post.excerpt,
+          image: post.coverImage,
+          author: site.name,
+          datePublished: post.publishedAt,
+          keywords: post.tags,
+        }))}</script>
+      </Helmet>
       <div className="max-w-4xl mx-auto mb-16">
         <meta itemProp="author" content="Clyde Tadiwa" />
         <h1 className="text-4xl font-bold mb-4" itemProp="headline">{post.title}</h1>

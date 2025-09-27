@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { BlogPost, Project } from "@shared/schema";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
@@ -137,6 +138,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="py-12">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Admin Dashboard</h1>
         <Button variant="outline" onClick={handleLogout}>

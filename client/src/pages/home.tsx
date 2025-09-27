@@ -10,6 +10,8 @@ import { useInView } from "react-intersection-observer";
 import gsap from "gsap";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
+import { site, buildJsonLdWebsite, buildJsonLdPerson, absoluteUrl } from "@/lib/seo";
 
 // Skeleton components for loading states
 const ProjectCardSkeleton = () => (
@@ -69,6 +71,23 @@ export default function Home() {
 
   return (
     <div className="space-y-2 relative">
+      <Helmet>
+        <title>{`${site.name} · Portfolio`}</title>
+        <meta name="description" content={site.description} />
+        <link rel="canonical" href={absoluteUrl('/')} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={`${site.name} · Portfolio`} />
+        <meta property="og:description" content={site.description} />
+        <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
+        <meta property="og:url" content={absoluteUrl('/')} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${site.name} · Portfolio`} />
+        <meta name="twitter:description" content={site.description} />
+        <meta name="twitter:image" content={absoluteUrl(site.defaultImage)} />
+        {site.twitter && <meta name="twitter:site" content={`@${site.twitter}`} />}
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdWebsite())}</script>
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdPerson())}</script>
+      </Helmet>
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_40%_at_50%_60%,rgba(var(--primary-rgb),0.1),transparent)]" />
       <Hero />
       
@@ -108,10 +127,10 @@ export default function Home() {
         <div className="flex flex-row items-center justify-between mb-12">
           <div className="mb-4 md:mb-0">
             <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Latest Blog Posts
+              Latest Thoughts
             </h2>
             <p className="text-muted-foreground mt-2 text-sm md:text-base">
-              Thoughts, insights, and tutorials
+              Thoughts, and insights
             </p>
           </div>
           <Link href="/blog">

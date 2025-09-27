@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 const routes = [
   { path: "/", label: "Home" },
   { path: "/projects", label: "Projects" },
-  { path: "/blog", label: "Blog" },
+  { path: "/blog", label: "Thoughts" },
 ];
 
 export default function Navigation() {

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginCredentials } from "@shared/schema";
 import { apiRequest, setToken } from "@/lib/queryClient";
+import { Helmet } from "react-helmet-async";
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -47,6 +48,9 @@ export default function AdminLogin() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Admin Login</CardTitle>

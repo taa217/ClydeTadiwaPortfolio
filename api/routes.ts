@@ -143,6 +143,104 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     }
   });
 
+  // -------- SEO & Discovery Endpoints --------
+  // Sitemap XML
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "";
+      const allPosts = await storage.getPosts();
+      const posts = allPosts.filter(p => !p.isDraft);
+      const projects = await storage.getProjects();
+
+      const urls: string[] = [];
+      urls.push(`${base || ''}/`);
+      urls.push(`${base || ''}/projects`);
+      urls.push(`${base || ''}/blog`);
+      for (const post of posts) {
+        urls.push(`${base || ''}/blog/${post.slug}`);
+      }
+
+      const now = new Date().toISOString();
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+      urls.map(u => `\n  <url><loc>${u}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`).join("") +
+      `\n</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('');
+    }
+  });
+
+  // Robots.txt
+  app.get("/robots.txt", (_req, res) => {
+    const base = process.env.SITE_URL?.replace(/\/$/, "");
+    const body = [
+      'User-agent: *',
+      'Allow: /',
+      `Sitemap: ${base ? base : ''}/sitemap.xml`,
+    ].join('\n');
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(body);
+  });
+
+  // RSS 2.0 feed
+  app.get("/rss.xml", async (_req, res) => {
+    try {
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "";
+      const allPosts = await storage.getPosts();
+      const posts = allPosts.filter(p => !p.isDraft).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+      const channelTitle = 'Blog feed';
+      const channelLink = `${base || ''}/blog`;
+      const channelDesc = 'Latest posts';
+
+      const items = posts.map(p => `\n  <item>\n    <title><![CDATA[${p.title}]]></title>\n    <link>${base || ''}/blog/${p.slug}</link>\n    <guid>${base || ''}/blog/${p.slug}</guid>\n    <pubDate>${new Date(p.publishedAt).toUTCString()}</pubDate>\n    <description><![CDATA[${p.excerpt}]]></description>\n  </item>`).join("");
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n<channel>\n  <title><![CDATA[${channelTitle}]]></title>\n  <link>${channelLink}</link>\n  <description><![CDATA[${channelDesc}]]></description>${items}\n</channel>\n</rss>`;
+
+      res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
+      res.send(xml);
+    } catch (error) {
+      console.error('Error generating RSS feed:', error);
+      res.status(500).send('');
+    }
+  });
+
+  // JSON Feed v1
+  app.get("/feed.json", async (_req, res) => {
+    try {
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "";
+      const allPosts = await storage.getPosts();
+      const posts = allPosts.filter(p => !p.isDraft).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+      const feed = {
+        version: "https://jsonfeed.org/version/1",
+        title: "Blog feed",
+        home_page_url: `${base || ''}/blog`,
+        feed_url: `${base || ''}/feed.json`,
+        items: posts.map(p => ({
+          id: `${base || ''}/blog/${p.slug}`,
+          url: `${base || ''}/blog/${p.slug}`,
+          title: p.title,
+          content_html: p.content,
+          summary: p.excerpt,
+          date_published: new Date(p.publishedAt).toISOString(),
+          tags: p.tags,
+          image: p.coverImage,
+        }))
+      };
+
+      res.setHeader('Content-Type', 'application/feed+json; charset=utf-8');
+      res.json(feed);
+    } catch (error) {
+      console.error('Error generating JSON feed:', error);
+      res.status(500).json({});
+    }
+  });
+
   // Admin posts route - duplicate of public but without auth for now (temporary fix)
   app.get("/api/admin/posts", async (_req, res) => { // Admin route - all posts including drafts
     try {
