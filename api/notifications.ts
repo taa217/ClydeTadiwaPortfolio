@@ -21,7 +21,7 @@ export async function notifyNewBlogPost(postId: number) {
       return;
     }
 
-    const subject = `✨ New Blog Post: ${post.title}`;
+    const subject = ` ${post.title}`;
     const html = `
       <div style="margin:0;padding:24px;background-color:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -56,7 +56,7 @@ export async function notifyNewBlogPost(postId: number) {
                 <tr>
                   <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
-                    <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">Visit My Site</a>
+                      <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">Visit the blog</a>
                     </p>
                     <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
@@ -108,7 +108,7 @@ export async function notifyNewProject(projectId: number) {
       return;
     }
 
-    const subject = `🚀 New Project: ${project.title}`;
+    const subject = `I've just launched a new project: ${project.title}`;
     const html = `
       <div style="margin:0;padding:24px;background-color:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -143,7 +143,7 @@ export async function notifyNewProject(projectId: number) {
                 <tr>
                   <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
-                      Explore more: <a href="https://clydetadiwa.vercel.app/projects" style="color:#0f172a;text-decoration:underline;">clydetadiwa.vercel.app/projects</a>
+                      <a href="https://clydetadiwa.vercel.app/projects" style="color:#0f172a;text-decoration:underline;">View more projects</a>
                     </p>
                     <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
