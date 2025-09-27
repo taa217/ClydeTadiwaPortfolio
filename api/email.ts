@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
+import { Resend } from 'resend';
 
 // Create a transporter object optimized for serverless environments
 const createTransporter = () => {
@@ -59,6 +60,39 @@ export async function checkGmailSetup(): Promise<{ isValid: boolean; message: st
   };
 }
 
+// --- Resend setup ---
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+function isResendConfigured(): boolean {
+  return Boolean(resend);
+}
+
+async function sendEmailViaResend(options: EmailOptions): Promise<void> {
+  if (!resend) {
+    throw new Error('Resend client is not configured.');
+  }
+
+  const to = options.to;
+  const subject = options.subject;
+  const html = options.html;
+
+  const result = await resend.emails.send({
+    from: RESEND_FROM,
+    to,
+    subject,
+    html
+  });
+
+  if ((result as any).error) {
+    // The SDK returns { data, error }
+    const err = (result as any).error;
+    const message = typeof err === 'string' ? err : (err.message || 'Unknown Resend error');
+    throw new Error(`Resend error: ${message}`);
+  }
+}
+
 // Retry function for failed email sends
 async function retryOperation<T>(
   operation: () => Promise<T>,
@@ -85,7 +119,15 @@ async function retryOperation<T>(
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  // Check Gmail setup first
+  // Prefer Resend in serverless if configured; fallback to Gmail SMTP
+  if (isResendConfigured()) {
+    return retryOperation(async () => {
+      console.log(`Sending via Resend to: ${options.to}`);
+      await sendEmailViaResend(options);
+    }, 5, 1000);
+  }
+
+  // Gmail fallback
   const setupCheck = await checkGmailSetup();
   if (!setupCheck.isValid) {
     console.error('Gmail setup issue:', setupCheck.message);
@@ -94,7 +136,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   return retryOperation(async () => {
     const transporter = createTransporter();
-    
+
     try {
       // Verify connection configuration before sending
       console.log('Verifying email connection...');
@@ -113,11 +155,9 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       console.log('Message sent successfully: %s', info.messageId);
       console.log('Email accepted for:', info.accepted);
       console.log('Email rejected for:', info.rejected);
-      
     } catch (error) {
-      console.error('Error in sendEmail:', error);
-      
-      // Add specific error handling for common issues
+      console.error('Error in sendEmail (Gmail):', error);
+
       if (error instanceof Error) {
         if (error.message.includes('ENOTFOUND')) {
           throw new Error('Failed to connect to email server. DNS resolution failed.');
@@ -131,63 +171,77 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
           throw new Error('Connection refused by email server.');
         }
       }
-      
+
       throw error;
     } finally {
-      // Close the transporter connection
       transporter.close();
     }
-  }, 3, 3000); // Retry up to 3 times with 3 second initial delay
+  }, 3, 3000);
 }
 
-// Batch email sending function to avoid overwhelming the SMTP server
+// Batch email sending with concurrency control and provider-aware throttling
 export async function sendBatchEmails(emails: EmailOptions[]): Promise<void> {
   console.log(`Starting batch email send for ${emails.length} recipients`);
-  
-  // Send emails in batches with delays to avoid rate limiting
-  const batchSize = 3; // Reduced to 3 emails at a time for better reliability
-  const delayBetweenBatches = 2000; // 2 second delay between batches
-  
-  for (let i = 0; i < emails.length; i += batchSize) {
-    const batch = emails.slice(i, i + batchSize);
-    console.log(`Sending batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(emails.length / batchSize)}`);
-    
-    // Send batch sequentially instead of parallel to reduce load
-    for (const email of batch) {
+
+  // Dedupe recipients
+  const seen = new Set<string>();
+  const uniqueEmails = emails.filter(e => {
+    const key = e.to.toLowerCase().trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const provider = isResendConfigured() ? 'resend' : 'gmail';
+  const concurrency = provider === 'resend' ? 10 : 2; // Resend can handle more safely
+  const perEmailDelayMs = provider === 'resend' ? 100 : 400; // small jitter to spread out
+
+  let index = 0;
+  let successCount = 0;
+  let failureCount = 0;
+
+  async function worker(workerId: number) {
+    while (true) {
+      const current = index++;
+      if (current >= uniqueEmails.length) break;
+      const email = uniqueEmails[current];
       try {
         await sendEmail(email);
-        console.log(`Successfully sent email to: ${email.to}`);
-        // Small delay between individual emails
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error(`Failed to send email to ${email.to}:`, error);
-        // Continue with other emails even if one fails
+        successCount++;
+      } catch (err) {
+        failureCount++;
+        console.error(`[worker ${workerId}] Failed to send to ${email.to}:`, err);
       }
-    }
-    
-    // Delay between batches (except for the last batch)
-    if (i + batchSize < emails.length) {
-      console.log(`Waiting ${delayBetweenBatches}ms before next batch...`);
-      await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      // Throttle between sends per worker
+      await new Promise(resolve => setTimeout(resolve, perEmailDelayMs));
     }
   }
-  
-  console.log('Batch email sending completed');
+
+  const workers = Array.from({ length: Math.min(concurrency, uniqueEmails.length) }, (_, i) => worker(i + 1));
+  await Promise.all(workers);
+
+  console.log(`Batch email sending completed. Success: ${successCount}, Failed: ${failureCount}`);
 }
 
 // Add a test function to verify email configuration
 export async function testEmailConfiguration(): Promise<boolean> {
   try {
+    if (isResendConfigured()) {
+      // Minimal ping using Resend API key presence
+      console.log('Resend appears configured. Attempting dry-run validation by sending to self (skipped).');
+      return true;
+    }
+
     const setupCheck = await checkGmailSetup();
     if (!setupCheck.isValid) {
       console.error('Gmail setup check failed:', setupCheck.message);
       return false;
     }
-    
+
     const transporter = createTransporter();
     await transporter.verify();
     transporter.close();
-    console.log('Email configuration is valid');
+    console.log('Email configuration (Gmail) is valid');
     return true;
   } catch (error) {
     console.error('Email configuration error:', error);

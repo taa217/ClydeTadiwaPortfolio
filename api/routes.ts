@@ -354,27 +354,31 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     try {
       console.log('Testing email configuration...');
       
-      // Check Gmail setup first
-      const setupCheck = await checkGmailSetup();
-      console.log('Gmail setup check:', setupCheck);
+      const usingResend = Boolean(process.env.RESEND_API_KEY);
+      let gmailSetupMsg: string | undefined;
       
-      // Test connection
+      if (!usingResend) {
+        // Only check Gmail if Resend is not configured
+        const setupCheck = await checkGmailSetup();
+        console.log('Gmail setup check:', setupCheck);
+        gmailSetupMsg = setupCheck.message;
+        if (!setupCheck.isValid) {
+          return res.status(400).json({ 
+            success: false, 
+            message: setupCheck.message,
+            details: 'Email configuration issue detected'
+          });
+        }
+      }
+
+      // Test connection via selected provider
       const isConfigValid = await testEmailConfiguration();
       console.log('Email config test result:', isConfigValid);
-      
-      if (!setupCheck.isValid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: setupCheck.message,
-          details: 'Gmail configuration issue detected'
-        });
-      }
-      
       if (!isConfigValid) {
         return res.status(500).json({ 
           success: false, 
           message: 'Email configuration test failed',
-          details: 'Unable to connect to Gmail SMTP server'
+          details: `Unable to connect to ${usingResend ? 'Resend API' : 'Gmail SMTP server'}`
         });
       }
       
@@ -391,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
               <ul>
                 <li><strong>Time:</strong> ${new Date().toISOString()}</li>
                 <li><strong>Server:</strong> Vercel Serverless Function</li>
-                <li><strong>Email Service:</strong> Gmail SMTP</li>
+                <li><strong>Email Service:</strong> ${usingResend ? 'Resend' : 'Gmail SMTP'}</li>
               </ul>
             </div>
             <p style="color: #6c757d; font-size: 14px;">
@@ -409,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
         success: true, 
         message: 'Email configuration test passed! Check your inbox for the test email.',
         details: {
-          setupCheck: setupCheck.message,
+          setupCheck: usingResend ? 'Resend configured' : (gmailSetupMsg || 'Gmail configured'),
           connectionTest: 'Passed',
           testEmailSent: true
         }
@@ -434,8 +438,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const postData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createPost(postData);
       
-      // Notify subscribers asynchronously (don't block response)
-      notifyNewBlogPost(post.id).catch(err => console.error("Error notifying subscribers about new post:", err));
+      // Notify subscribers and wait; ensures work happens before serverless freeze
+      await notifyNewBlogPost(post.id).catch(err => console.error("Error notifying subscribers about new post:", err));
 
       res.status(201).json(post);
     } catch (error) {
@@ -493,8 +497,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
 
-      // Notify subscribers asynchronously
-       notifyNewProject(project.id).catch(err => console.error("Error notifying subscribers about new project:", err));
+      // Notify subscribers and wait; ensures work happens before serverless freeze
+      await notifyNewProject(project.id).catch(err => console.error("Error notifying subscribers about new project:", err));
 
       res.status(201).json(project);
     } catch (error) {
