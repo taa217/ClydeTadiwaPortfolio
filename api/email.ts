@@ -1,33 +1,28 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { Resend } from 'resend';
 
 // Create a transporter object optimized for serverless environments
 const createTransporter = () => {
-  return nodemailer.createTransport({
+  const options: SMTPTransport.Options = {
     host: 'smtp.gmail.com',
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
       user: 'clydetadiwa8@gmail.com',
-      pass: process.env.EMAIL_PASS
+      pass: process.env.EMAIL_PASS || ''
     },
-    // Optimized for serverless environments
     pool: false, // Disable pooling for serverless
-    maxConnections: 1, // Single connection
-    maxMessages: 1, // One message per connection
-    connectionTimeout: 45000, // Increased to 45 seconds
-    socketTimeout: 45000, // Increased to 45 seconds
-    greetingTimeout: 45000, // Increased to 45 seconds
-    // Add TLS options for better compatibility
+    connectionTimeout: 45000,
+    socketTimeout: 45000,
+    greetingTimeout: 45000,
     tls: {
-      rejectUnauthorized: false, // Allow self-signed certificates if needed
+      rejectUnauthorized: false,
       ciphers: 'SSLv3',
     },
-    // Add debug mode (remove in production)
-    debug: process.env.NODE_ENV === 'development',
-    logger: process.env.NODE_ENV === 'development',
-  });
+  };
+  return nodemailer.createTransport(options);
 };
 
 interface EmailOptions {
@@ -99,7 +94,7 @@ async function retryOperation<T>(
   maxRetries: number = 3,
   delay: number = 1000
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | null = null;
   
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -115,7 +110,7 @@ async function retryOperation<T>(
     }
   }
   
-  throw lastError;
+  throw (lastError ?? new Error('Operation failed after multiple retries'));
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
