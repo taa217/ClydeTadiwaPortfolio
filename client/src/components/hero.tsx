@@ -56,8 +56,7 @@ export default function Hero() {
             <span className="text-primary">.</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            A passionate software engineer focused on building innovative technology solutions 
-            that make a difference.
+          I just love building technology that makes a real difference in people’s lives.
           </p>
           <div className="flex gap-4">
             <Link href="/blog/about-me-clyde-tadiwa">
