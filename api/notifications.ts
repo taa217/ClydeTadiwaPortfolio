@@ -21,44 +21,44 @@ export async function notifyNewBlogPost(postId: number) {
       return;
     }
 
-    const subject = `✨ New Blog Post Alert: ${post.title} is Now Live!`;
+    const subject = `✨ New Blog Post: ${post.title}`;
     const html = `
-      <div style="font-family: 'Roboto', 'Arial', sans-serif; color: #333; margin: 0; padding: 20px; background-color: #f8f8f8;">
+      <div style="margin:0;padding:24px;background-color:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>
             <td align="center">
-              <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0">
+              <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
                 <tr>
-                  <td style="padding: 30px 0; text-align: center;">
-                    <h1 style="font-size: 28px; margin-bottom: 20px; color: #007bff;">${post.title}</h1>
-                    <p style="font-size: 16px; color: #777;">Published on ${new Date(post.publishedAt).toLocaleDateString()}</p>
+                  <td style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#f1f5f9;">
+                    <div style="font-size:14px;letter-spacing:.08em;color:#475569;text-transform:uppercase;">Clyde Tadiwa</div>
+                    <h1 style="font-size:24px;line-height:1.3;margin:6px 0 0 0;color:#0f172a;">${post.title}</h1>
+                    <div style="font-size:13px;color:#64748b;margin-top:6px;">Published ${new Date(post.publishedAt).toLocaleDateString()}</div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display: block;">
-                      <img src="${post.coverImage}" alt="${post.title}" style="width: 100%; border-radius: 8px; margin-bottom: 20px; display: block;">
+                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display:block;">
+                      <img src="${post.coverImage}" alt="${post.title}" style="display:block;width:100%;height:auto;border:0;">
                     </a>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 0 20px;">
-                    <p style="font-size: 16px; line-height: 1.6; color: #555;">
-                      ${post.excerpt}
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#334155;">${post.excerpt}</p>
+                    <div style="text-align:center;margin:24px 0 8px 0;">
+                      <a href="https://clydetadiwa.vercel.app/blog/${post.slug}"
+                         style="display:inline-block;padding:12px 20px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+                        Read the full post →
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
+                    <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
+                      More on the site: <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">clydetadiwa.vercel.app</a>
                     </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 20px 0; text-align: center;">
-                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                      Read the Full Post &rarr;
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 30px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 14px;">
-                    <p style="margin-bottom: 10px;">Stay updated with the latest insights. <a href="https://clydetadiwa.vercel.app" style="color: #007bff; text-decoration: none;">Visit Our Blog</a></p>
-                    <p style="margin-bottom: 0;">&copy; ${new Date().getFullYear()} Clyde Tadiwa. All rights reserved.</p>
+                    <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
                 </tr>
               </table>
@@ -108,44 +108,44 @@ export async function notifyNewProject(projectId: number) {
       return;
     }
 
-    const subject = `🚀 New Project Showcase: ${project.title} is Live!`;
+    const subject = `🚀 New Project: ${project.title}`;
     const html = `
-      <div style="font-family: 'Roboto', 'Arial', sans-serif; color: #333; margin: 0; padding: 20px; background-color: #f8f8f8;">
+      <div style="margin:0;padding:24px;background-color:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>
             <td align="center">
-              <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0">
+              <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
                 <tr>
-                  <td style="padding: 30px 0; text-align: center;">
-                    <h1 style="font-size: 28px; margin-bottom: 20px; color: #007bff;">${project.title}</h1>
-                    <p style="font-size: 16px; color: #777;">Explore our latest creation!</p>
+                  <td style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#f1f5f9;">
+                    <div style="font-size:14px;letter-spacing:.08em;color:#475569;text-transform:uppercase;">Clyde Tadiwa</div>
+                    <h1 style="font-size:24px;line-height:1.3;margin:6px 0 0 0;color:#0f172a;">${project.title}</h1>
+                    <div style="font-size:13px;color:#64748b;margin-top:6px;">New project showcase</div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <a href="https://clydetadiwa.vercel.app/projects" style="display: block;">
-                      <img src="${project.imageUrl}" alt="${project.title}" style="width: 100%; border-radius: 8px; margin-bottom: 20px; display: block;">
+                    <a href="https://clydetadiwa.vercel.app/projects" style="display:block;">
+                      <img src="${project.imageUrl}" alt="${project.title}" style="display:block;width:100%;height:auto;border:0;">
                     </a>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 0 20px;">
-                    <p style="font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 20px;">
-                      ${project.description}
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#334155;">${project.description}</p>
+                    <div style="text-align:center;margin:24px 0 8px 0;">
+                      <a href="https://clydetadiwa.vercel.app/projects"
+                         style="display:inline-block;padding:12px 20px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+                        View project details →
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
+                    <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
+                      Explore more: <a href="https://clydetadiwa.vercel.app/projects" style="color:#0f172a;text-decoration:underline;">clydetadiwa.vercel.app/projects</a>
                     </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 20px 0; text-align: center;">
-                    <a href="https://clydetadiwa.vercel.app/projects" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                      View Project Details &rarr;
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 30px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 14px;">
-                    <p style="margin-bottom: 10px;">Discover more exciting projects. <a href="https://clydetadiwa.vercel.app/projects" style="color: #007bff; text-decoration: none;">See Our Portfolio</a></p>
-                    <p style="margin-bottom: 0;">&copy; ${new Date().getFullYear()} Clyde Tadiwa. All rights reserved.</p>
+                    <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
                 </tr>
               </table>

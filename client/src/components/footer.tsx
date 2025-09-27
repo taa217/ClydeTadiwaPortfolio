@@ -101,7 +101,7 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Contact</h3>
             <div className="space-y-2 text-muted-foreground">
               <p>Harare, Zimbabwe</p>
-              <p>clydetadiwa8@gmail.com</p>
+              <p>clydetadiwa@lucid-ai.co</p>
             </div>
           </motion.div>
 
