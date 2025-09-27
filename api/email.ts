@@ -13,7 +13,6 @@ const createTransporter = () => {
       user: 'clydetadiwa8@gmail.com',
       pass: process.env.EMAIL_PASS || ''
     },
-    pool: false, // Disable pooling for serverless
     connectionTimeout: 45000,
     socketTimeout: 45000,
     greetingTimeout: 45000,
