@@ -56,7 +56,7 @@ export async function notifyNewBlogPost(postId: number) {
                 <tr>
                   <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
-                      More on the site: <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">clydetadiwa.vercel.app</a>
+                    <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">Visit My Site</a>
                     </p>
                     <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
