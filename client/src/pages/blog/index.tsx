@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { BlogPost } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
-import { site, absoluteUrl } from "@/lib/seo";
+import { site, absoluteUrl, buildJsonLdWebPage, buildJsonLdBreadcrumb, buildJsonLdBlogItemList } from "@/lib/seo";
 
 const BlogCardSkeleton = () => (
   <div className="w-full">
@@ -30,6 +30,25 @@ export default function BlogIndex() {
         <meta property="og:description" content={`Blog posts by ${site.name}`} />
         <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl('/blog')} />
+        <meta property="og:site_name" content={site.name} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="author" content={site.name} />
+        {site.twitter && <meta name="twitter:site" content={`@${site.twitter}`} />}
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdWebPage({
+          title: `Thoughts · ${site.name}`,
+          description: `Blog posts by ${site.name}`,
+          url: '/blog',
+          image: site.defaultImage
+        }))}</script>
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdBreadcrumb([
+          { name: 'Home', url: '/' },
+          { name: 'Blog', url: '/blog' },
+        ]))}</script>
+        {Array.isArray(posts) && posts.length > 0 && (
+          <script type="application/ld+json">{JSON.stringify(buildJsonLdBlogItemList(
+            posts.map(p => ({ title: p.title, slug: p.slug }))
+          ))}</script>
+        )}
       </Helmet>
       <h1 className="text-4xl font-bold mb-8">My Thoughts</h1>
       <div className="grid md:grid-cols-2 gap-8">

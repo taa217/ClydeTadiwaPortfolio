@@ -11,7 +11,7 @@ import gsap from "gsap";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
-import { site, buildJsonLdWebsite, buildJsonLdPerson, absoluteUrl } from "@/lib/seo";
+import { site, buildJsonLdWebsite, buildJsonLdPerson, absoluteUrl, buildJsonLdWebPage, buildJsonLdBreadcrumb } from "@/lib/seo";
 
 // Skeleton components for loading states
 const ProjectCardSkeleton = () => (
@@ -80,13 +80,24 @@ export default function Home() {
         <meta property="og:description" content={site.description} />
         <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl('/')} />
+        <meta property="og:site_name" content={site.name} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="author" content={site.name} />
         <meta name="twitter:title" content={`${site.name} · Portfolio`} />
         <meta name="twitter:description" content={site.description} />
         <meta name="twitter:image" content={absoluteUrl(site.defaultImage)} />
         {site.twitter && <meta name="twitter:site" content={`@${site.twitter}`} />}
         <script type="application/ld+json">{JSON.stringify(buildJsonLdWebsite())}</script>
         <script type="application/ld+json">{JSON.stringify(buildJsonLdPerson())}</script>
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdWebPage({
+          title: `${site.name} · Portfolio`,
+          description: site.description,
+          url: '/',
+          image: site.defaultImage
+        }))}</script>
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdBreadcrumb([
+          { name: 'Home', url: '/' },
+        ]))}</script>
       </Helmet>
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_40%_at_50%_60%,rgba(var(--primary-rgb),0.1),transparent)]" />
       <Hero />

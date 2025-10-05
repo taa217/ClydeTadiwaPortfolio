@@ -230,6 +230,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           date_published: new Date(p.publishedAt).toISOString(),
           tags: p.tags,
           image: p.coverImage,
+          author: { name: 'Clyde Tadiwa' },
         }))
       };
 

@@ -10,7 +10,7 @@ import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
-import { absoluteUrl, buildJsonLdBlogPosting, site } from "@/lib/seo";
+import { absoluteUrl, buildJsonLdBlogPosting, site, buildJsonLdBreadcrumb } from "@/lib/seo";
 
 const BlogPostSkeleton = () => (
   <div className="max-w-none">
@@ -130,8 +130,16 @@ export default function BlogPostPage() {
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:image" content={absoluteUrl(post.coverImage || site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl(`/blog/${post.slug}`)} />
+        <meta property="og:site_name" content={site.name} />
         <meta property="article:published_time" content={post.publishedAt} />
+        <meta property="article:author" content={site.name} />
+        <meta name="author" content={site.name} />
+        <meta name="twitter:card" content="summary_large_image" />
+        {site.twitter && <meta name="twitter:site" content={`@${site.twitter}`} />}
         {post.tags?.length ? <meta name="keywords" content={post.tags.join(', ')} /> : null}
+        {post.tags?.map(tag => (
+          <meta key={tag} property="article:tag" content={tag} />
+        ))}
         <script type="application/ld+json">{JSON.stringify(buildJsonLdBlogPosting({
           title: post.title,
           slug: post.slug,
@@ -141,6 +149,11 @@ export default function BlogPostPage() {
           datePublished: post.publishedAt,
           keywords: post.tags,
         }))}</script>
+        <script type="application/ld+json">{JSON.stringify(buildJsonLdBreadcrumb([
+          { name: 'Home', url: '/' },
+          { name: 'Blog', url: '/blog' },
+          { name: post.title, url: `/blog/${post.slug}` },
+        ]))}</script>
       </Helmet>
       <div className="max-w-4xl mx-auto mb-16">
         <meta itemProp="author" content="Clyde Tadiwa" />

@@ -6,7 +6,7 @@ export const site = {
   twitter: "clydetadiwa",
   description:
     "Portfolio, projects, and thoughts on AI, ML, and software engineering by Clyde Tadiwa.",
-  defaultImage: "/assets/ai.png",
+  defaultImage: "/assets/favicon-ct.svg",
 };
 
 export function absoluteUrl(pathname: string): string {
@@ -67,7 +67,105 @@ export function buildJsonLdBlogPosting(p: {
       '@id': absoluteUrl(`/blog/${p.slug}`),
     },
     keywords: p.keywords,
+    isAccessibleForFree: true,
+    publisher: {
+      "@type": "Person",
+      name: site.name,
+      url: site.domain || undefined,
+    },
   } as const;
 }
 
 
+
+export function buildJsonLdWebPage(p: {
+  title: string;
+  description?: string;
+  url: string;
+  image?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: p.title,
+    description: p.description,
+    url: absoluteUrl(p.url),
+    image: p.image ? absoluteUrl(p.image) : undefined,
+    inLanguage: "en",
+    isPartOf: {
+      "@type": "WebSite",
+      name: site.name,
+      url: site.domain || undefined,
+    },
+  } as const;
+}
+
+export function buildJsonLdBreadcrumb(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absoluteUrl(item.url),
+    })),
+  } as const;
+}
+
+export function buildJsonLdBlogItemList(posts: { title: string; slug: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: posts.map((p, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: absoluteUrl(`/blog/${p.slug}`),
+    })),
+  } as const;
+}
+
+export function buildJsonLdProjectsItemList(projects: { title: string; url?: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: projects.map((p, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: p.url ? p.url : absoluteUrl('/projects'),
+    })),
+  } as const;
+}
+
+export function buildJsonLdProject(p: {
+  name: string;
+  description?: string;
+  image?: string;
+  url?: string;
+  codeRepository?: string;
+  programmingLanguage?: string;
+  keywords?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: p.name,
+    description: p.description,
+    image: p.image ? absoluteUrl(p.image) : undefined,
+    url: p.url,
+    keywords: p.keywords,
+    creator: {
+      "@type": "Person",
+      name: site.name,
+      url: site.domain || undefined,
+    },
+    ...(p.codeRepository
+      ? {
+          sameAs: [p.codeRepository],
+          programmingLanguage: p.programmingLanguage,
+        }
+      : {}),
+  } as const;
+}
