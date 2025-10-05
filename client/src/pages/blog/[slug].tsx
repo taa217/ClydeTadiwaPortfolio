@@ -131,6 +131,7 @@ export default function BlogPostPage() {
         <meta property="og:image" content={absoluteUrl(post.coverImage || site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl(`/blog/${post.slug}`)} />
         <meta property="og:site_name" content={site.name} />
+        <meta property="og:image:alt" content={post.title} />
         <meta property="article:published_time" content={post.publishedAt} />
         <meta property="article:author" content={site.name} />
         <meta name="author" content={site.name} />

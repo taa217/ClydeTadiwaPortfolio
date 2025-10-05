@@ -81,6 +81,7 @@ export default function Home() {
         <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl('/')} />
         <meta property="og:site_name" content={site.name} />
+        <meta property="og:image:alt" content={`${site.name} preview image`} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="author" content={site.name} />
         <meta name="twitter:title" content={`${site.name} · Portfolio`} />

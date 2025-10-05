@@ -10,8 +10,16 @@ export const site = {
 };
 
 export function absoluteUrl(pathname: string): string {
+  // Pass-through absolute and data URLs
+  if (!pathname) return pathname;
+  const lower = pathname.toLowerCase();
+  if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("//") || lower.startsWith("data:")) {
+    return pathname;
+  }
+
   const base = site.domain?.replace(/\/$/, "") || "";
-  if (!base) return pathname; // fallback to relative if domain not set
+  // If no base domain configured, ensure we at least return a leading-slash path
+  if (!base) return pathname.startsWith("/") ? pathname : `/${pathname}`;
   const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
   return `${base}${path}`;
 }

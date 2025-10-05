@@ -31,6 +31,7 @@ export default function BlogIndex() {
         <meta property="og:image" content={absoluteUrl(site.defaultImage)} />
         <meta property="og:url" content={absoluteUrl('/blog')} />
         <meta property="og:site_name" content={site.name} />
+        <meta property="og:image:alt" content={`Blog preview image for ${site.name}`} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="author" content={site.name} />
         {site.twitter && <meta name="twitter:site" content={`@${site.twitter}`} />}
