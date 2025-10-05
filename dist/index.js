@@ -466,7 +466,7 @@ async function notifyNewBlogPost(postId) {
                 </tr>
                 <tr>
                   <td>
-                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display: block;">
+                    <a href="https://clydetadiwa.blog/blog/${post.slug}" style="display: block;">
                       <img src="${post.coverImage}" alt="${post.title}" style="width: 100%; border-radius: 8px; margin-bottom: 20px; display: block;">
                     </a>
                   </td>
@@ -480,7 +480,7 @@ async function notifyNewBlogPost(postId) {
                 </tr>
                 <tr>
                   <td style="padding: 20px 0; text-align: center;">
-                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="https://clydetadiwa.blog/blog/${post.slug}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
                       Read the Full Post &rarr;
                     </a>
                   </td>

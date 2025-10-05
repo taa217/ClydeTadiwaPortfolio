@@ -37,7 +37,7 @@ export async function notifyNewBlogPost(postId: number) {
                 </tr>
                 <tr>
                   <td>
-                    <a href="https://clydetadiwa.vercel.app/blog/${post.slug}" style="display:block;">
+                    <a href="https://clydetadiwa.blog/blog/${post.slug}" style="display:block;">
                       <img src="${post.coverImage}" alt="${post.title}" style="display:block;width:100%;height:auto;border:0;">
                     </a>
                   </td>
@@ -46,7 +46,7 @@ export async function notifyNewBlogPost(postId: number) {
                   <td style="padding:20px 24px;">
                     <p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#334155;">${post.excerpt}</p>
                     <div style="text-align:center;margin:24px 0 8px 0;">
-                      <a href="https://clydetadiwa.vercel.app/blog/${post.slug}"
+                      <a href="https://clydetadiwa.blog/blog/${post.slug}"
                          style="display:inline-block;padding:12px 20px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
                         Read the full post →
                       </a>
@@ -56,7 +56,7 @@ export async function notifyNewBlogPost(postId: number) {
                 <tr>
                   <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
-                      <a href="https://clydetadiwa.vercel.app" style="color:#0f172a;text-decoration:underline;">Visit the blog</a>
+                      <a href="https://clydetadiwa.blog" style="color:#0f172a;text-decoration:underline;">Visit the blog</a>
                     </p>
                     <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
@@ -124,7 +124,7 @@ export async function notifyNewProject(projectId: number) {
                 </tr>
                 <tr>
                   <td>
-                    <a href="https://clydetadiwa.vercel.app/projects" style="display:block;">
+                    <a href="https://clydetadiwa.blog/projects" style="display:block;">
                       <img src="${project.imageUrl}" alt="${project.title}" style="display:block;width:100%;height:auto;border:0;">
                     </a>
                   </td>
@@ -133,7 +133,7 @@ export async function notifyNewProject(projectId: number) {
                   <td style="padding:20px 24px;">
                     <p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#334155;">${project.description}</p>
                     <div style="text-align:center;margin:24px 0 8px 0;">
-                      <a href="https://clydetadiwa.vercel.app/projects"
+                      <a href="https://clydetadiwa.blog/projects"
                          style="display:inline-block;padding:12px 20px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
                         View project details →
                       </a>
@@ -143,7 +143,7 @@ export async function notifyNewProject(projectId: number) {
                 <tr>
                   <td style="padding:18px 24px;border-top:1px solid #e2e8f0;text-align:center;background:#f8fafc;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
-                      <a href="https://clydetadiwa.vercel.app/projects" style="color:#0f172a;text-decoration:underline;">View more projects</a>
+                      <a href="https://clydetadiwa.blog/projects" style="color:#0f172a;text-decoration:underline;">View more projects</a>
                     </p>
                     <p style="margin:0;font-size:12px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Clyde Tadiwa</p>
                   </td>
