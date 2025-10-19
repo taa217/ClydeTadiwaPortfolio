@@ -88,6 +88,68 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   
   // === Public Routes ===
 
+  // Screenshot proxy route (with CDN-friendly caching)
+  app.get("/api/screenshot", async (req, res) => {
+    try {
+      const targetUrl = String(req.query.url || "").trim();
+      const widthParam = Number(req.query.w || 1200);
+      const heightParam = req.query.h ? Number(req.query.h) : undefined;
+
+      // Basic validation
+      if (!targetUrl) {
+        return res.status(400).send("");
+      }
+      let urlObj: URL;
+      try {
+        urlObj = new URL(targetUrl);
+      } catch {
+        return res.status(400).send("");
+      }
+      if (!(urlObj.protocol === "http:" || urlObj.protocol === "https:")) {
+        return res.status(400).send("");
+      }
+
+      // Clamp width/height to sensible bounds
+      const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+      const width = clamp(isNaN(widthParam) ? 1200 : widthParam, 320, 2000);
+      const height = heightParam !== undefined ? clamp(isNaN(heightParam) ? 0 : heightParam, 0, 1200) : undefined;
+
+      // Use thum.io as a lightweight external screenshot provider
+      // Docs: https://image.thum.io/
+      // "maxAge" hints provider-side caching; we also set CDN caching headers below
+      const thumSegments = [
+        "https://image.thum.io/get",
+        "maxAge/86400", // 24h provider cache
+        `width/${width}`,
+      ];
+      if (height && height > 0) {
+        thumSegments.push(`crop/${height}`);
+      }
+      const providerUrl = `${thumSegments.join("/")}/${encodeURIComponent(urlObj.toString())}`;
+
+      const response = await fetch(providerUrl, {
+        // Provide a UA; some providers block default serverless bots
+        headers: { "User-Agent": "PersonalPortfolio/1.0 (+screenshot-proxy)" },
+      });
+
+      if (!response.ok) {
+        // Surface error status so <img onError> triggers on the client
+        return res.status(response.status).send("");
+      }
+
+      const contentType = response.headers.get("content-type") || "image/jpeg";
+      res.setHeader("Content-Type", contentType);
+      // Encourage Vercel CDN caching
+      res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+
+      const arrayBuffer = await response.arrayBuffer();
+      return res.status(200).send(Buffer.from(arrayBuffer));
+    } catch (error) {
+      console.error("Error generating screenshot:", error);
+      return res.status(500).send("");
+    }
+  });
+
   // Project routes
   app.get("/api/projects", async (_req, res) => { // Path: /projects
     try {

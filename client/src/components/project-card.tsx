@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Github } from "lucide-react";
 import type { Project } from "@shared/schema";
 import { useSpring, animated } from "@react-spring/web";
+import { useState } from "react";
 
 export default function ProjectCard({ project }: { project: Project }) {
   const [spring, api] = useSpring(() => ({
@@ -13,6 +14,9 @@ export default function ProjectCard({ project }: { project: Project }) {
 
 	const primaryUrl = project.liveUrl || project.githubUrl;
 	const isClickable = Boolean(primaryUrl);
+
+	const screenshotUrl = primaryUrl ? `/api/screenshot?url=${encodeURIComponent(primaryUrl)}&w=1200` : undefined;
+	const [useFallback, setUseFallback] = useState(false);
 
   return (
     <animated.div
@@ -37,13 +41,14 @@ export default function ProjectCard({ project }: { project: Project }) {
 				}}
 			>
 				<div className="relative aspect-video overflow-hidden">
-          <img
-            src={project.imageUrl}
-            alt={project.title}
-            loading="lazy"
-            decoding="async"
-            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-          />
+					<img
+						src={useFallback || !screenshotUrl ? project.imageUrl : screenshotUrl}
+						alt={project.title}
+						loading="lazy"
+						decoding="async"
+						className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+						onError={() => setUseFallback(true)}
+					/>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="absolute bottom-4 right-4 flex gap-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
             {project.liveUrl && (
