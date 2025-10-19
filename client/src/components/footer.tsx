@@ -60,9 +60,9 @@ export default function Footer() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-			<h3 className="relative inline-block text-lg font-semibold mb-4">
-				<span className="relative z-10">Clyde Tadiwa</span>
-				<img src="/assets/favicon-ct.svg" alt="" aria-hidden="true" className="absolute inset-0 -z-10 opacity-10 scale-150 pointer-events-none select-none" />
+			<h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
+				<img src="/assets/favicon-ct.svg" alt="" aria-hidden="true" className="h-6 w-6 rounded-md" />
+				<span>Clyde Tadiwa</span>
 			</h3>
             <p className="text-muted-foreground">
               Building innovative technology solutions that make a difference.
