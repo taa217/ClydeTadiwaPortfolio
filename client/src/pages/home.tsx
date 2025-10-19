@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import type { Project, BlogPost } from "@shared/schema";
-import { useSpring, animated } from "@react-spring/web";
 import { useInView } from "react-intersection-observer";
 import gsap from "gsap";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
 import { site, buildJsonLdWebsite, buildJsonLdPerson, absoluteUrl, buildJsonLdWebPage, buildJsonLdBreadcrumb } from "@/lib/seo";
@@ -36,12 +36,6 @@ export default function Home() {
     queryKey: ["/api/posts"],
   });
 
-  // Animate sections on scroll
-  const [projectsRef, projectsInView] = useInView({
-    threshold: 0.2,
-    triggerOnce: true,
-  });
-
   const [postsRef, postsInView] = useInView({
     threshold: 0.2,
     triggerOnce: true,
@@ -49,15 +43,6 @@ export default function Home() {
 
   // Stagger animation for cards
   useEffect(() => {
-    if (projectsInView && projects && !isLoadingProjects) {
-      gsap.from(".project-card", {
-        duration: 0.8,
-        y: 50,
-        opacity: 0,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
-    }
     if (postsInView && posts && !isLoadingPosts) {
       gsap.from(".blog-card", {
         duration: 0.8,
@@ -67,7 +52,7 @@ export default function Home() {
         ease: "power3.out",
       });
     }
-  }, [projectsInView, postsInView, projects, posts, isLoadingProjects, isLoadingPosts]);
+  }, [postsInView, posts, isLoadingPosts]);
 
   return (
     <div className="space-y-2 relative">
@@ -103,7 +88,7 @@ export default function Home() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_40%_at_50%_60%,rgba(var(--primary-rgb),0.1),transparent)]" />
       <Hero />
       
-      <section ref={projectsRef} className="relative">
+      <section className="relative">
         <div className="flex flex-row items-center justify-between mb-12">
           <div className="mb-4 md:mb-0">
             <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -127,10 +112,17 @@ export default function Home() {
                   <ProjectCardSkeleton />
                 </div>
               ))
-            : projects?.slice(0, 2).map((project) => (
-                <div key={project.id} className="project-card">
+            : projects?.slice(0, 2).map((project, idx) => (
+                <motion.div
+                  key={project.id}
+                  className="project-card"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
+                >
                   <ProjectCard project={project} />
-                </div>
+                </motion.div>
               ))}
         </div>
       </section>

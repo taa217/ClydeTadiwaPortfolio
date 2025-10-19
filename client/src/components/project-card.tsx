@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Github } from "lucide-react";
@@ -41,6 +40,8 @@ export default function ProjectCard({ project }: { project: Project }) {
           <img
             src={project.imageUrl}
             alt={project.title}
+            loading="lazy"
+            decoding="async"
             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
