@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ExternalLink, Github } from "lucide-react";
 import type { Project } from "@shared/schema";
 import { useSpring, animated } from "@react-spring/web";
@@ -22,9 +21,8 @@ export default function ProjectCard({ project }: { project: Project }) {
       onMouseEnter={() => api.start({ scale: 1.02, y: -5 })}
       onMouseLeave={() => api.start({ scale: 1, y: 0 })}
     >
-		<Card className="overflow-hidden group backdrop-blur-sm bg-card/95 border-primary/10">
-			<div
-				className={`relative aspect-video overflow-hidden ${isClickable ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2' : ''}`}
+			<Card
+				className={`overflow-hidden group backdrop-blur-sm bg-card/95 border-primary/10 ${isClickable ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2' : ''}`}
 				role={isClickable ? 'link' : undefined}
 				tabIndex={isClickable ? 0 : undefined}
 				aria-label={isClickable ? `Open ${project.title}` : undefined}
@@ -39,6 +37,7 @@ export default function ProjectCard({ project }: { project: Project }) {
 					}
 				}}
 			>
+				<div className="relative aspect-video overflow-hidden">
           <img
             src={project.imageUrl}
             alt={project.title}
@@ -51,7 +50,8 @@ export default function ProjectCard({ project }: { project: Project }) {
                 href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/90 hover:bg-white p-2 rounded-full transition-colors"
+								className="bg-white/90 hover:bg-white p-2 rounded-full transition-colors"
+								onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="w-5 h-5 text-black" />
               </a>
@@ -61,7 +61,8 @@ export default function ProjectCard({ project }: { project: Project }) {
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/90 hover:bg-white p-2 rounded-full transition-colors"
+								className="bg-white/90 hover:bg-white p-2 rounded-full transition-colors"
+								onClick={(e) => e.stopPropagation()}
               >
                 <Github className="w-5 h-5 text-black" />
               </a>
@@ -72,8 +73,8 @@ export default function ProjectCard({ project }: { project: Project }) {
           <CardTitle className="text-2xl">{project.title}</CardTitle>
           <CardDescription className="line-clamp-2">{project.description}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-2 flex-wrap">
+				<CardContent>
+					<div className="flex items-center gap-2 flex-wrap">
             {project.technologies.map((tech) => (
               <Badge 
                 key={tech} 
@@ -83,28 +84,34 @@ export default function ProjectCard({ project }: { project: Project }) {
                 {tech}
               </Badge>
             ))}
+						{(project.liveUrl || project.githubUrl) && (
+							<div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
+								{project.liveUrl && (
+									<a
+										href={project.liveUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="hover:text-primary hover:underline"
+										onClick={(e) => e.stopPropagation()}
+									>
+										Live
+									</a>
+								)}
+								{project.githubUrl && (
+									<a
+										href={project.githubUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="hover:text-primary hover:underline"
+										onClick={(e) => e.stopPropagation()}
+									>
+										Code
+									</a>
+								)}
+							</div>
+						)}
           </div>
         </CardContent>
-			<CardFooter className="flex-wrap gap-3">
-				<div className="ml-auto flex gap-3">
-					{project.liveUrl && (
-						<Button asChild>
-							<a href={project.liveUrl} target="_blank" rel="noopener noreferrer" aria-label={`View ${project.title} live`}>
-								<ExternalLink />
-								<span>View Project</span>
-							</a>
-						</Button>
-					)}
-					{project.githubUrl && (
-						<Button asChild variant="outline">
-							<a href={project.githubUrl} target="_blank" rel="noopener noreferrer" aria-label={`View ${project.title} code on GitHub`}>
-								<Github />
-								<span>View Code</span>
-							</a>
-						</Button>
-					)}
-				</div>
-			</CardFooter>
       </Card>
     </animated.div>
   );
