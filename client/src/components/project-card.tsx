@@ -94,7 +94,7 @@ export default function ProjectCard({ project }: { project: Project }) {
 										className="hover:text-primary hover:underline"
 										onClick={(e) => e.stopPropagation()}
 									>
-										Live
+										View Project
 									</a>
 								)}
 								{project.githubUrl && (
