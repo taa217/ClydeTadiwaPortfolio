@@ -16,7 +16,10 @@ export default function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/">
-            <span className="text-xl font-bold cursor-pointer">Clyde Tadiwa</span>
+            <span className="relative inline-block text-xl font-bold cursor-pointer">
+              <span className="relative z-10">Clyde Tadiwa</span>
+              <img src="/assets/favicon-ct.svg" alt="" aria-hidden="true" className="hidden md:block absolute inset-0 -z-10 opacity-10 scale-150 pointer-events-none select-none" />
+            </span>
           </Link>
 
           <div className="flex gap-8">
