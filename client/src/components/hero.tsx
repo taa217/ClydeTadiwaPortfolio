@@ -29,7 +29,7 @@ export default function Hero() {
   useEffect(() => {
     if (isInView && videoRef.current) {
       console.log("Loading video source"); // Debugging
-      videoRef.current.src = "https://media.istockphoto.com/id/1459585081/video/digital-abstract-network-grid-over-the-earth-artificial-intelligence-neural-network-growing.mp4?s=mp4-640x640-is&k=20&c=-vKDwYFF-onrZVZJR9hdA1V89xkq1pqG6qbKL0s9quo=";
+      videoRef.current.src = "https://www.pexels.com/download/video/34394738/";
       videoRef.current.load();
     }
   }, [isInView]);
