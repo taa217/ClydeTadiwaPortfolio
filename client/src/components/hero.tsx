@@ -29,7 +29,7 @@ export default function Hero() {
   useEffect(() => {
     if (isInView && videoRef.current) {
       console.log("Loading video source"); // Debugging
-      videoRef.current.src = "https://www.pexels.com/download/video/34394738/";
+      videoRef.current.src = "https://cdn.jsdelivr.net/gh/taa217/portfolio-asserts/hero.mp4";
       videoRef.current.load();
     }
   }, [isInView]);
