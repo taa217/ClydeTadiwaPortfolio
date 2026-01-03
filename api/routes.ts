@@ -1,4 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import fs from 'fs';
+import path from 'path';
 // createServer is no longer needed for the return type here, but keep if used elsewhere locally
 // import { createServer } from "http"; 
 import { DbStorage } from "./storage.js";
@@ -28,20 +30,20 @@ const verifyToken = (token: string): { adminId: number } | null => {
 // Middleware to check if user is authenticated via JWT
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     console.log('❌ Auth failed - No authorization header or invalid format');
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
+
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
   const payload = verifyToken(token);
-  
+
   if (!payload) {
     console.log('❌ Auth failed - Invalid or expired token');
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
+
   console.log('✅ Auth success - Valid token for adminId:', payload.adminId);
   // Add adminId to request for use in protected routes
   (req as any).adminId = payload.adminId;
@@ -73,7 +75,7 @@ router.get('/api/posts/:slug', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-export default router; 
+export default router;
 // --- End Standalone Router ---
 
 
@@ -85,8 +87,84 @@ export default router;
  * @param app The Express application instance.
  */
 export async function registerRoutes(app: Express): Promise<void> { // Corrected return type
-  
+
   // === Public Routes ===
+
+  // Server-side rendering for SEO
+  app.get(["/blog/:slug", "/projects/:id"], async (req, res, next) => {
+    // Check if this is an API request (shouldn't be due to Vercel rewrites, but good to be safe)
+    if (req.path.startsWith('/api')) return next();
+
+    try {
+      const isBlog = req.path.startsWith('/blog/');
+      let title = "Clyde Tadiwa · Portfolio";
+      let description = "Personal portfolio and blog of Clyde Tadiwa.";
+      let image = "/assets/og-image.png";
+      let url = \`https://clydetadiwa.blog\${req.path}\`;
+
+      if (isBlog) {
+        const slug = req.params.slug;
+        const post = await storage.getPostBySlug(slug);
+        if (post) {
+          title = post.title;
+          description = post.excerpt || post.title;
+          image = post.coverImage || image;
+        }
+      } else {
+        const id = Number(req.params.id);
+        if (!isNaN(id)) {
+          const project = await storage.getProject(id);
+          if (project) {
+            title = project.title;
+            description = project.shortDescription || project.title;
+            image = project.imageUrl || image;
+          }
+        }
+      }
+
+      // Read index.html
+      let template = "";
+      const possiblePaths = [
+        path.join(process.cwd(), 'dist', 'public', 'index.html'),
+        path.join(process.cwd(), 'public', 'index.html'),
+      ];
+
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          template = fs.readFileSync(p, 'utf-8');
+          break;
+        }
+      }
+
+      if (!template) {
+        console.error("Could not find index.html template");
+        // Fallback to simple HTML if template is missing (shouldn't happen in prod)
+        return res.send(\`<!DOCTYPE html><html><head>
+          <meta property="og:title" content="\${title}" />
+          <meta property="og:description" content="\${description}" />
+          <meta property="og:image" content="\${image}" />
+        </head><body><h1>Redirecting...</h1><script>window.location.reload();</script></body></html>\`);
+      }
+
+      // Inject tags
+      const headInjection = \`
+        <meta property="og:title" content="\${title.replace(/"/g, '&quot;')}" />
+        <meta property="og:description" content="\${description.replace(/"/g, '&quot;')}" />
+        <meta property="og:image" content="\${image.replace(/"/g, '&quot;')}" />
+        <meta property="og:url" content="\${url.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:title" content="\${title.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:description" content="\${description.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:image" content="\${image.replace(/"/g, '&quot;')}" />
+      \`;
+
+      const html = template.replace('<!--HEAD_INJECTION-->', headInjection);
+      res.send(html);
+
+    } catch (error) {
+      console.error("Error serving SSR page:", error);
+      next();
+    }
+  });
 
   // Screenshot proxy route (with CDN-friendly caching)
   app.get("/api/screenshot", async (req, res) => {
@@ -120,12 +198,12 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const thumSegments = [
         "https://image.thum.io/get",
         "maxAge/86400", // 24h provider cache
-        `width/${width}`,
+        `width / ${ width } `,
       ];
       if (height && height > 0) {
-        thumSegments.push(`crop/${height}`);
+        thumSegments.push(`crop / ${ height } `);
       }
-      const providerUrl = `${thumSegments.join("/")}/${encodeURIComponent(urlObj.toString())}`;
+      const providerUrl = `${ thumSegments.join("/") }/${encodeURIComponent(urlObj.toString())}`;
 
       const response = await fetch(providerUrl, {
         // Provide a UA; some providers block default serverless bots
@@ -156,52 +234,52 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const projects = await storage.getProjects();
       res.json(projects);
     } catch (error) {
-        console.error('Error fetching projects:', error);
-        res.status(500).json({ message: 'Failed to fetch projects' });
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ message: 'Failed to fetch projects' });
     }
   });
 
   app.get("/api/projects/:id", async (req, res) => { // Path: /projects/:id
     try {
-        const projectId = Number(req.params.id);
-        if (isNaN(projectId)) {
-            return res.status(400).json({ message: "Invalid project ID" });
-        }
-        const project = await storage.getProject(projectId);
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
-        res.json(project);
+      const projectId = Number(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      res.json(project);
     } catch (error) {
-        console.error(`Error fetching project ${req.params.id}:`, error);
-        res.status(500).json({ message: 'Failed to fetch project' });
+      console.error(`Error fetching project ${req.params.id}:`, error);
+      res.status(500).json({ message: 'Failed to fetch project' });
     }
   });
 
   // Blog post routes - Public API for published posts
   app.get("/api/posts", async (_req, res) => { // Public route for published posts
     try {
-        const posts = await storage.getPosts();
-        // Only return published posts for public viewing
-        const publishedPosts = posts.filter(post => !post.isDraft);
-        res.json(publishedPosts);
+      const posts = await storage.getPosts();
+      // Only return published posts for public viewing
+      const publishedPosts = posts.filter(post => !post.isDraft);
+      res.json(publishedPosts);
     } catch (error) {
-        console.error('Error fetching published posts:', error);
-        res.status(500).json({ message: 'Failed to fetch posts' });
+      console.error('Error fetching published posts:', error);
+      res.status(500).json({ message: 'Failed to fetch posts' });
     }
   });
 
   app.get("/api/posts/:slug", async (req, res) => { // Path: /posts/:slug
     try {
-        const post = await storage.getPostBySlug(req.params.slug);
-        // Ensure post exists and is not a draft for public view
-        if (!post || post.isDraft) { 
-          return res.status(404).json({ message: "Blog post not found" });
-        }
-        res.json(post);
+      const post = await storage.getPostBySlug(req.params.slug);
+      // Ensure post exists and is not a draft for public view
+      if (!post || post.isDraft) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
     } catch (error) {
-        console.error(`Error fetching post by slug ${req.params.slug}:`, error);
-        res.status(500).json({ message: 'Failed to fetch post' });
+      console.error(`Error fetching post by slug ${req.params.slug}:`, error);
+      res.status(500).json({ message: 'Failed to fetch post' });
     }
   });
 
@@ -224,9 +302,9 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
       const now = new Date().toISOString();
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
-      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
-      urls.map(u => `\n  <url><loc>${u}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`).join("") +
-      `\n</urlset>`;
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+        urls.map(u => `\n  <url><loc>${u}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`).join("") +
+        `\n</urlset>`;
 
       res.setHeader('Content-Type', 'application/xml');
       res.send(xml);
@@ -253,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     try {
       const base = process.env.SITE_URL?.replace(/\/$/, "") || "";
       const allPosts = await storage.getPosts();
-      const posts = allPosts.filter(p => !p.isDraft).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      const posts = allPosts.filter(p => !p.isDraft).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
       const channelTitle = 'Blog feed';
       const channelLink = `${base || ''}/blog`;
@@ -276,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     try {
       const base = process.env.SITE_URL?.replace(/\/$/, "") || "";
       const allPosts = await storage.getPosts();
-      const posts = allPosts.filter(p => !p.isDraft).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      const posts = allPosts.filter(p => !p.isDraft).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
       const feed = {
         version: "https://jsonfeed.org/version/1",
@@ -307,12 +385,12 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // Admin posts route - duplicate of public but without auth for now (temporary fix)
   app.get("/api/admin/posts", async (_req, res) => { // Admin route - all posts including drafts
     try {
-        const posts = await storage.getPosts();
-        // Return ALL posts for admin (including drafts)
-        res.json(posts);
+      const posts = await storage.getPosts();
+      // Return ALL posts for admin (including drafts)
+      res.json(posts);
     } catch (error) {
-        console.error('Error fetching all posts for admin:', error);
-        res.status(500).json({ message: 'Failed to fetch posts' });
+      console.error('Error fetching all posts for admin:', error);
+      res.status(500).json({ message: 'Failed to fetch posts' });
     }
   });
 
@@ -345,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
         return res.status(400).json({ message: "Invalid email format", errors: error.errors });
       }
       // Check for specific error message from storage layer if needed
-      if (error.message === 'Email already subscribed') { 
+      if (error.message === 'Email already subscribed') {
         return res.status(409).json({ message: error.message });
       }
       console.error("Subscription error:", error);
@@ -358,44 +436,44 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   app.get("/api/admin/auth-check", (req, res) => { // Path: /admin/auth-check
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(200).json({ authenticated: false });
     }
-    
+
     const token = authHeader.substring(7);
     const payload = verifyToken(token);
-    
+
     if (!payload) {
       return res.status(200).json({ authenticated: false });
     }
-    
+
     return res.status(200).json({ authenticated: true });
   });
 
   app.post("/api/admin/login", async (req, res) => { // Path: /admin/login
     try {
       const credentials = loginSchema.parse(req.body);
-      
+
       // Compare against environment variables
       const adminUser = process.env.ADMIN_USERNAME;
       const adminPass = process.env.ADMIN_PASSWORD;
 
       if (!adminUser || !adminPass) {
-          console.error("Admin credentials environment variables not set!");
-          return res.status(500).json({ message: "Server configuration error" });
+        console.error("Admin credentials environment variables not set!");
+        return res.status(500).json({ message: "Server configuration error" });
       }
 
       if (credentials.username === adminUser && credentials.password === adminPass) {
         const token = generateToken(1); // Use admin ID 1
         console.log('🔑 Generated JWT token for admin login');
-        
-        return res.json({ 
+
+        return res.json({
           message: "Logged in successfully",
           token: token
         });
       } else {
-         return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: "Invalid credentials" });
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -416,18 +494,18 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   app.post("/api/admin/test-email", requireAuth, async (req, res) => { // Path: /admin/test-email
     try {
       console.log('Testing email configuration...');
-      
+
       const usingResend = Boolean(process.env.RESEND_API_KEY);
       let gmailSetupMsg: string | undefined;
-      
+
       if (!usingResend) {
         // Only check Gmail if Resend is not configured
         const setupCheck = await checkGmailSetup();
         console.log('Gmail setup check:', setupCheck);
         gmailSetupMsg = setupCheck.message;
         if (!setupCheck.isValid) {
-          return res.status(400).json({ 
-            success: false, 
+          return res.status(400).json({
+            success: false,
             message: setupCheck.message,
             details: 'Email configuration issue detected'
           });
@@ -438,13 +516,13 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const isConfigValid = await testEmailConfiguration();
       console.log('Email config test result:', isConfigValid);
       if (!isConfigValid) {
-        return res.status(500).json({ 
-          success: false, 
+        return res.status(500).json({
+          success: false,
           message: 'Email configuration test failed',
           details: `Unable to connect to ${usingResend ? 'Resend API' : 'Gmail SMTP server'}`
         });
       }
-      
+
       // Send a test email to the admin
       const testEmailBody = {
         to: 'clydetadiwa8@gmail.com', // Send test email to yourself
@@ -467,13 +545,13 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           </div>
         `
       };
-      
+
       console.log('Sending test email...');
       await sendEmail(testEmailBody);
       console.log('Test email sent successfully');
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Email configuration test passed! Check your inbox for the test email.',
         details: {
           setupCheck: usingResend ? 'Resend configured' : (gmailSetupMsg || 'Gmail configured'),
@@ -481,11 +559,11 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           testEmailSent: true
         }
       });
-      
+
     } catch (error) {
       console.error('Email test failed:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         message: 'Email test failed',
         error: error instanceof Error ? error.message : 'Unknown error',
         details: 'Check Vercel logs for more details'
@@ -500,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     try {
       const postData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createPost(postData);
-      
+
       // Notify subscribers and wait; ensures work happens before serverless freeze
       await notifyNewBlogPost(post.id).catch(err => console.error("Error notifying subscribers about new post:", err));
 
@@ -517,45 +595,45 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // Update a blog post
   app.patch("/api/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
     try {
-        const postId = Number(req.params.id);
-        if (isNaN(postId)) {
-             return res.status(400).json({ message: "Invalid post ID" });
-        }
-        // Consider using a stricter schema for updates if needed
-        const post = await storage.updatePost(postId, req.body); 
-        res.json(post);
+      const postId = Number(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+      // Consider using a stricter schema for updates if needed
+      const post = await storage.updatePost(postId, req.body);
+      res.json(post);
     } catch (error: any) {
-        // Check if error is due to not found vs other DB error
-        if (error.message && error.message.includes("not found")) { // Adjust if your storage throws specific errors
-            return res.status(404).json({ message: "Post not found" });
-        }
-        console.error(`Error updating post ${req.params.id}:`, error);
-        res.status(500).json({ message: "Failed to update post" });
+      // Check if error is due to not found vs other DB error
+      if (error.message && error.message.includes("not found")) { // Adjust if your storage throws specific errors
+        return res.status(404).json({ message: "Post not found" });
+      }
+      console.error(`Error updating post ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to update post" });
     }
   });
 
   // Delete a blog post
   app.delete("/api/posts/:id", requireAuth, async (req, res) => { // Path: /posts/:id
     try {
-        const postId = Number(req.params.id);
-        if (isNaN(postId)) {
-             return res.status(400).json({ message: "Invalid post ID" });
-        }
-        await storage.deletePost(postId);
-        res.status(204).send(); // No content on successful deletion
+      const postId = Number(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+      await storage.deletePost(postId);
+      res.status(204).send(); // No content on successful deletion
     } catch (error: any) {
-        if (error.message && error.message.includes("not found")) { // Adjust check as needed
-            return res.status(404).json({ message: "Post not found" });
-        }
-        console.error(`Error deleting post ${req.params.id}:`, error);
-        res.status(500).json({ message: "Failed to delete post" });
+      if (error.message && error.message.includes("not found")) { // Adjust check as needed
+        return res.status(404).json({ message: "Post not found" });
+      }
+      console.error(`Error deleting post ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to delete post" });
     }
   });
 
   // Create a new project
   app.post("/api/projects", requireAuth, async (req, res) => { // Path: /projects
-    console.log('HANDLER /projects: req.path =', req.path); 
-  console.log('HANDLER /projects: req.originalUrl =', req.originalUrl);
+    console.log('HANDLER /projects: req.path =', req.path);
+    console.log('HANDLER /projects: req.originalUrl =', req.originalUrl);
     try {
       const projectData = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(projectData);
@@ -602,18 +680,18 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
   // Delete a project
   app.delete("/api/projects/:id", requireAuth, async (req, res) => { // Path: /projects/:id
     try {
-        const projectId = Number(req.params.id);
-         if (isNaN(projectId)) {
-             return res.status(400).json({ message: "Invalid project ID" });
-        }
-        await storage.deleteProject(projectId);
-        res.status(204).send();
+      const projectId = Number(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      await storage.deleteProject(projectId);
+      res.status(204).send();
     } catch (error: any) {
-         if (error.message && error.message.includes("not found")) { // Adjust check as needed
-             return res.status(404).json({ message: "Project not found" });
-        }
-        console.error(`Error deleting project ${req.params.id}:`, error);
-        res.status(500).json({ message: "Failed to delete project" });
+      if (error.message && error.message.includes("not found")) { // Adjust check as needed
+        return res.status(404).json({ message: "Project not found" });
+      }
+      console.error(`Error deleting project ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to delete project" });
     }
   });
 

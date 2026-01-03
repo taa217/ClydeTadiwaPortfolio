@@ -1,18 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#000000" />
-    <link rel="icon" href="/assets/favicon-ct.svg" type="image/svg+xml" />
-    <link rel="alternate icon" href="/assets/favicon-ct.svg" />
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml" />
-    <link rel="alternate" type="application/feed+json" title="JSON Feed" href="/feed.json" />
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="/assets/favicon-ct.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/assets/favicon-ct.svg" />
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml" />
+  <link rel="alternate" type="application/feed+json" title="JSON Feed" href="/feed.json" />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+  <!-- Default Open Graph Tags -->
+  <meta property="og:title" content="Clyde Tadiwa · Portfolio" />
+  <meta property="og:description" content="Personal portfolio and blog of Clyde Tadiwa." />
+  <meta property="og:image" content="/assets/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!--HEAD_INJECTION-->
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
