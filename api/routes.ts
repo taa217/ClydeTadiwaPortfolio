@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       let title = "Clyde Tadiwa · Portfolio";
       let description = "Personal portfolio and blog of Clyde Tadiwa.";
       let image = "/assets/og-image.png";
-      let url = \`https://clydetadiwa.blog\${req.path}\`;
+      let url = `https://clydetadiwa.blog${req.path}`;
 
       if (isBlog) {
         const slug = req.params.slug;
@@ -139,23 +139,23 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       if (!template) {
         console.error("Could not find index.html template");
         // Fallback to simple HTML if template is missing (shouldn't happen in prod)
-        return res.send(\`<!DOCTYPE html><html><head>
-          <meta property="og:title" content="\${title}" />
-          <meta property="og:description" content="\${description}" />
-          <meta property="og:image" content="\${image}" />
-        </head><body><h1>Redirecting...</h1><script>window.location.reload();</script></body></html>\`);
+        return res.send(`<!DOCTYPE html><html><head>
+          <meta property="og:title" content="${title}" />
+          <meta property="og:description" content="${description}" />
+          <meta property="og:image" content="${image}" />
+        </head><body><h1>Redirecting...</h1><script>window.location.reload();</script></body></html>`);
       }
 
       // Inject tags
-      const headInjection = \`
-        <meta property="og:title" content="\${title.replace(/"/g, '&quot;')}" />
-        <meta property="og:description" content="\${description.replace(/"/g, '&quot;')}" />
-        <meta property="og:image" content="\${image.replace(/"/g, '&quot;')}" />
-        <meta property="og:url" content="\${url.replace(/"/g, '&quot;')}" />
-        <meta name="twitter:title" content="\${title.replace(/"/g, '&quot;')}" />
-        <meta name="twitter:description" content="\${description.replace(/"/g, '&quot;')}" />
-        <meta name="twitter:image" content="\${image.replace(/"/g, '&quot;')}" />
-      \`;
+      const headInjection = `
+        <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
+        <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+        <meta property="og:image" content="${image.replace(/"/g, '&quot;')}" />
+        <meta property="og:url" content="${url.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:image" content="${image.replace(/"/g, '&quot;')}" />
+      `;
 
       const html = template.replace('<!--HEAD_INJECTION-->', headInjection);
       res.send(html);
@@ -198,12 +198,12 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const thumSegments = [
         "https://image.thum.io/get",
         "maxAge/86400", // 24h provider cache
-        `width / ${ width } `,
+        `width / ${width} `,
       ];
       if (height && height > 0) {
-        thumSegments.push(`crop / ${ height } `);
+        thumSegments.push(`crop / ${height} `);
       }
-      const providerUrl = `${ thumSegments.join("/") }/${encodeURIComponent(urlObj.toString())}`;
+      const providerUrl = `${thumSegments.join("/")}/${encodeURIComponent(urlObj.toString())}`;
 
       const response = await fetch(providerUrl, {
         // Provide a UA; some providers block default serverless bots
