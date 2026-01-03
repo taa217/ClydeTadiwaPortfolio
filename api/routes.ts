@@ -102,6 +102,12 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       let image = "/assets/og-image.png";
       let url = `https://clydetadiwa.blog${req.path}`;
 
+      const ensureAbsolute = (path: string) => {
+        if (!path) return path;
+        if (path.startsWith('http')) return path;
+        return `https://clydetadiwa.blog${path.startsWith('/') ? '' : '/'}${path}`;
+      };
+
       if (isBlog) {
         const slug = req.params.slug;
         const post = await storage.getPostBySlug(slug);
@@ -121,6 +127,9 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           }
         }
       }
+
+      // Ensure image is absolute
+      image = ensureAbsolute(image);
 
       // Read index.html
       let template = "";
