@@ -104,6 +104,18 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
       const ensureAbsolute = (path: string) => {
         if (!path) return path;
+
+        // Optimize Pexels images for social media (WhatsApp limit is ~300KB)
+        if (path.includes('images.pexels.com')) {
+          const hasParams = path.includes('?');
+          const separator = hasParams ? '&' : '?';
+          // Force resize to 1200px width and compress
+          if (!path.includes('w=1200')) {
+            return `${path}${separator}auto=compress&cs=tinysrgb&w=1200`;
+          }
+          return path;
+        }
+
         if (path.startsWith('http')) return path;
         return `https://clydetadiwa.blog${path.startsWith('/') ? '' : '/'}${path}`;
       };
