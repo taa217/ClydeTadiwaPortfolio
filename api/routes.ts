@@ -110,11 +110,15 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
       if (isBlog) {
         const slug = req.params.slug;
+        console.log(`[SSR] Fetching post for slug: ${slug}`);
         const post = await storage.getPostBySlug(slug);
         if (post) {
+          console.log(`[SSR] Found post: ${post.title}, coverImage: '${post.coverImage}'`);
           title = post.title;
           description = post.excerpt || post.title;
           image = post.coverImage || image;
+        } else {
+          console.log(`[SSR] Post not found for slug: ${slug}`);
         }
       } else {
         const id = Number(req.params.id);
@@ -129,7 +133,9 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       }
 
       // Ensure image is absolute
+      const originalImage = image;
       image = ensureAbsolute(image);
+      console.log(`[SSR] Final image URL: ${image} (was: ${originalImage})`);
 
       // Read index.html
       let template = "";
