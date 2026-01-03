@@ -101,6 +101,8 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       let description = "Personal portfolio and blog of Clyde Tadiwa.";
       let image = "/assets/og-image.png";
       let url = `https://clydetadiwa.blog${req.path}`;
+      let post: any;
+      let project: any;
 
       const ensureAbsolute = (path: string) => {
         if (!path) return path;
@@ -123,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       if (isBlog) {
         const slug = req.params.slug;
         console.log(`[SSR] Fetching post for slug: ${slug}`);
-        const post = await storage.getPostBySlug(slug);
+        post = await storage.getPostBySlug(slug);
         if (post) {
           console.log(`[SSR] Found post: ${post.title}, coverImage: '${post.coverImage}'`);
           title = post.title;
@@ -135,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       } else {
         const id = Number(req.params.id);
         if (!isNaN(id)) {
-          const project = await storage.getProject(id);
+          project = await storage.getProject(id);
           if (project) {
             title = project.title;
             description = project.shortDescription || project.title;
@@ -148,6 +150,34 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const originalImage = image;
       image = ensureAbsolute(image);
       console.log(`[SSR] Final image URL: ${image} (was: ${originalImage})`);
+
+      // Generate JSON-LD
+      let jsonLd = '';
+      if (isBlog && post) {
+        jsonLd = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": post.title,
+          "description": description,
+          "image": image,
+          "author": { "@type": "Person", "name": "Clyde Tadiwa" },
+          "datePublished": post.publishedAt,
+          "url": url
+        });
+      } else if (!isBlog && project) {
+        jsonLd = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": project.title,
+          "description": description,
+          "image": image,
+          "applicationCategory": "DeveloperApplication",
+          "url": url,
+          "author": { "@type": "Person", "name": "Clyde Tadiwa" }
+        });
+      }
+
+
 
       // Read index.html
       let template = "";
@@ -182,6 +212,7 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
         <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
         <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
         <meta name="twitter:image" content="${image.replace(/"/g, '&quot;')}" />
+        ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
       `;
 
       const html = template.replace('<!--HEAD_INJECTION-->', headInjection);
@@ -326,6 +357,9 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       for (const post of posts) {
         urls.push(`${base || ''}/blog/${post.slug}`);
       }
+      for (const project of projects) {
+        urls.push(`${base || ''}/projects/${project.id}`);
+      }
 
       const now = new Date().toISOString();
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -351,6 +385,35 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
     ].join('\n');
     res.setHeader('Content-Type', 'text/plain');
     res.send(body);
+  });
+
+  // llms.txt for AI Agents
+  app.get("/llms.txt", async (_req, res) => {
+    try {
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "https://clydetadiwa.blog";
+      const posts = await storage.getPosts();
+      const publishedPosts = posts.filter(p => !p.isDraft).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      const projects = await storage.getProjects();
+
+      let content = `# Clyde Tadiwa - Portfolio & Blog\n\n`;
+      content += `Personal portfolio and blog of Clyde Tadiwa, focusing on AI, ML, and software engineering.\n\n`;
+
+      content += `## Projects\n`;
+      projects.forEach(p => {
+        content += `- [${p.title}](${base}/projects/${p.id}): ${p.shortDescription || p.title}\n`;
+      });
+
+      content += `\n## Blog Posts\n`;
+      publishedPosts.forEach(p => {
+        content += `- [${p.title}](${base}/blog/${p.slug}): ${p.excerpt || p.title}\n`;
+      });
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.send(content);
+    } catch (error) {
+      console.error('Error generating llms.txt:', error);
+      res.status(500).send('Error generating content');
+    }
   });
 
   // RSS 2.0 feed
