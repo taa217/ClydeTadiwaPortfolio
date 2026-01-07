@@ -32,6 +32,22 @@
       "destination": "/api/index.ts"
     },
     {
+      "source": "/llms.txt",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/llms-full.txt",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/blog",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/projects",
+      "destination": "/api/index.ts"
+    },
+    {
       "source": "/blog/(.*)",
       "destination": "/api/index.ts"
     },

@@ -90,7 +90,136 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // === Public Routes ===
 
-  // Server-side rendering for SEO
+  // Server-side rendering for listing pages (/blog and /projects)
+  app.get(["/blog", "/projects"], async (req, res, next) => {
+    // Check if this is an API request
+    if (req.path.startsWith('/api')) return next();
+
+    try {
+      const isBlogListing = req.path === '/blog';
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "https://clydetadiwa.blog";
+
+      let title = isBlogListing ? "Blog · Clyde Tadiwa" : "Projects · Clyde Tadiwa";
+      let description = isBlogListing
+        ? "Explore blog posts by Clyde Tadiwa on AI, machine learning, software engineering, and technology."
+        : "View projects built by Clyde Tadiwa - AI applications, web development, and innovative software solutions.";
+      let url = `${base}${req.path}`;
+
+      // Fetch items for the listing
+      let items: any[] = [];
+      let jsonLd = '';
+      let noscriptContent = '';
+
+      if (isBlogListing) {
+        const allPosts = await storage.getPosts();
+        items = allPosts.filter(p => !p.isDraft).sort((a, b) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        );
+
+        // Build JSON-LD ItemList for blogs
+        jsonLd = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": title,
+          "description": description,
+          "url": url,
+          "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": items.map((post, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "item": {
+                "@type": "BlogPosting",
+                "headline": post.title,
+                "description": post.excerpt || post.title,
+                "url": `${base}/blog/${post.slug}`,
+                "datePublished": post.publishedAt,
+                "author": { "@type": "Person", "name": "Clyde Tadiwa" }
+              }
+            }))
+          }
+        });
+
+        // Build noscript content for crawlers
+        noscriptContent = `<h1>Blog Posts by Clyde Tadiwa</h1><ul>${items.map(p =>
+          `<li><a href="/blog/${p.slug}">${p.title}</a> - ${p.excerpt || ''}</li>`
+        ).join('')}</ul>`;
+      } else {
+        items = await storage.getProjects();
+
+        // Build JSON-LD ItemList for projects
+        jsonLd = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": title,
+          "description": description,
+          "url": url,
+          "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": items.map((project, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "item": {
+                "@type": "SoftwareApplication",
+                "name": project.title,
+                "description": project.shortDescription || project.title,
+                "url": `${base}/projects/${project.id}`,
+                "author": { "@type": "Person", "name": "Clyde Tadiwa" }
+              }
+            }))
+          }
+        });
+
+        // Build noscript content for crawlers
+        noscriptContent = `<h1>Projects by Clyde Tadiwa</h1><ul>${items.map(p =>
+          `<li><a href="/projects/${p.id}">${p.title}</a> - ${p.shortDescription || ''}</li>`
+        ).join('')}</ul>`;
+      }
+
+      // Read index.html template
+      let template = "";
+      const possiblePaths = [
+        path.join(process.cwd(), 'dist', 'public', 'index.html'),
+        path.join(process.cwd(), 'public', 'index.html'),
+      ];
+
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          template = fs.readFileSync(p, 'utf-8');
+          break;
+        }
+      }
+
+      if (!template) {
+        console.error("Could not find index.html template for listing page");
+        return next();
+      }
+
+      // Inject SEO tags
+      const headInjection = `
+        <title>${title}</title>
+        <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
+        <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
+        <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+        <meta property="og:url" content="${url.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
+        <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+        <link rel="canonical" href="${url}" />
+        <script type="application/ld+json">${jsonLd}</script>
+      `;
+
+      // Inject noscript content into body for crawlers
+      let html = template.replace('<!--HEAD_INJECTION-->', headInjection);
+      html = html.replace('<div id="root"></div>', `<div id="root"></div><noscript>${noscriptContent}</noscript>`);
+
+      res.send(html);
+    } catch (error) {
+      console.error("Error serving SSR listing page:", error);
+      next();
+    }
+  });
+
+  // Server-side rendering for SEO (individual items)
   app.get(["/blog/:slug", "/projects/:id"], async (req, res, next) => {
     // Check if this is an API request (shouldn't be due to Vercel rewrites, but good to be safe)
     if (req.path.startsWith('/api')) return next();
@@ -377,17 +506,22 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
   // Robots.txt
   app.get("/robots.txt", (_req, res) => {
-    const base = process.env.SITE_URL?.replace(/\/$/, "");
+    const base = process.env.SITE_URL?.replace(/\/$/, "") || "https://clydetadiwa.blog";
     const body = [
       'User-agent: *',
       'Allow: /',
-      `Sitemap: ${base ? base : ''}/sitemap.xml`,
+      '',
+      '# AI Crawler Content',
+      `# For AI agents, see ${base}/llms.txt for a summary`,
+      `# For full content, see ${base}/llms-full.txt`,
+      '',
+      `Sitemap: ${base}/sitemap.xml`,
     ].join('\n');
     res.setHeader('Content-Type', 'text/plain');
     res.send(body);
   });
 
-  // llms.txt for AI Agents
+  // llms.txt for AI Agents (summary version)
   app.get("/llms.txt", async (_req, res) => {
     try {
       const base = process.env.SITE_URL?.replace(/\/$/, "") || "https://clydetadiwa.blog";
@@ -396,22 +530,123 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       const projects = await storage.getProjects();
 
       let content = `# Clyde Tadiwa - Portfolio & Blog\n\n`;
-      content += `Personal portfolio and blog of Clyde Tadiwa, focusing on AI, ML, and software engineering.\n\n`;
+      content += `> Personal portfolio and blog of Clyde Tadiwa, focusing on AI, ML, and software engineering.\n`;
+      content += `> Website: ${base}\n`;
+      content += `> For full content, see: ${base}/llms-full.txt\n\n`;
 
-      content += `## Projects\n`;
+      content += `## Projects (${projects.length} total)\n\n`;
       projects.forEach(p => {
-        content += `- [${p.title}](${base}/projects/${p.id}): ${p.shortDescription || p.title}\n`;
+        content += `### ${p.title}\n`;
+        content += `- **URL**: ${base}/projects/${p.id}\n`;
+        content += `- **Description**: ${p.shortDescription || p.title}\n`;
+        if (p.technologies && Array.isArray(p.technologies)) {
+          content += `- **Technologies**: ${p.technologies.join(', ')}\n`;
+        }
+        content += `\n`;
       });
 
-      content += `\n## Blog Posts\n`;
+      content += `## Blog Posts (${publishedPosts.length} total)\n\n`;
       publishedPosts.forEach(p => {
-        content += `- [${p.title}](${base}/blog/${p.slug}): ${p.excerpt || p.title}\n`;
+        content += `### ${p.title}\n`;
+        content += `- **URL**: ${base}/blog/${p.slug}\n`;
+        content += `- **Published**: ${new Date(p.publishedAt).toISOString().split('T')[0]}\n`;
+        if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
+          content += `- **Tags**: ${p.tags.join(', ')}\n`;
+        }
+        content += `- **Summary**: ${p.excerpt || p.title}\n`;
+        content += `\n`;
       });
+
+      content += `---\n`;
+      content += `Last updated: ${new Date().toISOString()}\n`;
 
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
       res.send(content);
     } catch (error) {
       console.error('Error generating llms.txt:', error);
+      res.status(500).send('Error generating content');
+    }
+  });
+
+  // llms-full.txt for AI Agents (complete content version)
+  app.get("/llms-full.txt", async (_req, res) => {
+    try {
+      const base = process.env.SITE_URL?.replace(/\/$/, "") || "https://clydetadiwa.blog";
+      const posts = await storage.getPosts();
+      const publishedPosts = posts.filter(p => !p.isDraft).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      const projects = await storage.getProjects();
+
+      // Helper to strip HTML tags for plain text
+      const stripHtml = (html: string): string => {
+        return html
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+      let content = `# Clyde Tadiwa - Full Content Archive\n\n`;
+      content += `> Complete content from Clyde Tadiwa's portfolio and blog.\n`;
+      content += `> Website: ${base}\n`;
+      content += `> This document contains the full text of all published content.\n\n`;
+
+      content += `---\n\n`;
+      content += `# PROJECTS\n\n`;
+
+      projects.forEach((p, idx) => {
+        content += `## Project ${idx + 1}: ${p.title}\n\n`;
+        content += `**URL**: ${base}/projects/${p.id}\n\n`;
+        if (p.shortDescription) {
+          content += `**Short Description**: ${p.shortDescription}\n\n`;
+        }
+        if (p.description) {
+          content += `**Full Description**:\n${stripHtml(p.description)}\n\n`;
+        }
+        if (p.technologies && Array.isArray(p.technologies)) {
+          content += `**Technologies**: ${p.technologies.join(', ')}\n\n`;
+        }
+        if (p.githubUrl) {
+          content += `**GitHub**: ${p.githubUrl}\n\n`;
+        }
+        if (p.liveUrl) {
+          content += `**Live Demo**: ${p.liveUrl}\n\n`;
+        }
+        content += `---\n\n`;
+      });
+
+      content += `# BLOG POSTS\n\n`;
+
+      publishedPosts.forEach((p, idx) => {
+        content += `## Blog Post ${idx + 1}: ${p.title}\n\n`;
+        content += `**URL**: ${base}/blog/${p.slug}\n`;
+        content += `**Published**: ${new Date(p.publishedAt).toISOString().split('T')[0]}\n`;
+        if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
+          content += `**Tags**: ${p.tags.join(', ')}\n`;
+        }
+        content += `\n`;
+        if (p.excerpt) {
+          content += `**Excerpt**: ${p.excerpt}\n\n`;
+        }
+        if (p.content) {
+          content += `**Full Content**:\n${stripHtml(p.content)}\n\n`;
+        }
+        content += `---\n\n`;
+      });
+
+      content += `\nDocument generated: ${new Date().toISOString()}\n`;
+      content += `Total Projects: ${projects.length}\n`;
+      content += `Total Blog Posts: ${publishedPosts.length}\n`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+      res.send(content);
+    } catch (error) {
+      console.error('Error generating llms-full.txt:', error);
       res.status(500).send('Error generating content');
     }
   });
