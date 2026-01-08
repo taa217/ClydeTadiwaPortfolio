@@ -244,6 +244,22 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       // Put static content INSIDE the root div - React will hydrate/replace it
       html = html.replace('<div id="root"></div>', `<div id="root">${staticContent}</div>`);
 
+      // DYNAMIC RENDERING FOR BOTS
+      // If the user agent looks like a bot, strip out the client-side script tags
+      // This ensures the bot sees the static content we just injected and doesn't try to run React
+      // which might wipe out the content or fail in a headless environment.
+      const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+      const isBot = /bot|crawler|spider|crawling|perplexity|gptbot|chatgpt|googlebot|bingbot|yandex|baiduspider/i.test(userAgent);
+
+      if (isBot) {
+        console.log(`[SSR] Bot detected (${userAgent}), serving static HTML only`);
+        // Remove the main script module to prevent hydration
+        html = html.replace(/<script type="module" src="\/src\/main.tsx"><\/script>/g, '');
+        // Also remove other script tags that might load JS chunks
+        html = html.replace(/<script type="module" crossorigin src="\/assets\/[^"]+"><\/script>/g, '');
+        // Keep CSS links as they are needed for styling
+      }
+
       res.send(html);
     } catch (error) {
       console.error("Error serving SSR listing page:", error);
