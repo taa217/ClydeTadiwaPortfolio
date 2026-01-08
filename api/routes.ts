@@ -108,7 +108,6 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
       // Fetch items for the listing
       let items: any[] = [];
       let jsonLd = '';
-      let noscriptContent = '';
 
       if (isBlogListing) {
         const allPosts = await storage.getPosts();
@@ -140,10 +139,6 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           }
         });
 
-        // Build noscript content for crawlers
-        noscriptContent = `<h1>Blog Posts by Clyde Tadiwa</h1><ul>${items.map(p =>
-          `<li><a href="/blog/${p.slug}">${p.title}</a> - ${p.excerpt || ''}</li>`
-        ).join('')}</ul>`;
       } else {
         items = await storage.getProjects();
 
@@ -170,10 +165,6 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
           }
         });
 
-        // Build noscript content for crawlers
-        noscriptContent = `<h1>Projects by Clyde Tadiwa</h1><ul>${items.map(p =>
-          `<li><a href="/projects/${p.id}">${p.title}</a> - ${p.shortDescription || ''}</li>`
-        ).join('')}</ul>`;
       }
 
       // Read index.html template
@@ -208,9 +199,50 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
         <script type="application/ld+json">${jsonLd}</script>
       `;
 
-      // Inject noscript content into body for crawlers
+      // Build static HTML content for crawlers (will be replaced by React when JS loads)
+      let staticContent = '';
+      if (isBlogListing) {
+        staticContent = `
+          <main style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: system-ui, sans-serif;">
+            <h1>Blog Posts by Clyde Tadiwa</h1>
+            <p>${description}</p>
+            <ul style="list-style: none; padding: 0;">
+              ${items.map(p => `
+                <li style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #eee;">
+                  <h2><a href="/blog/${p.slug}" style="color: #0066cc; text-decoration: none;">${p.title}</a></h2>
+                  <p style="color: #666; font-size: 14px;">Published: ${new Date(p.publishedAt).toLocaleDateString()}</p>
+                  <p>${p.excerpt || ''}</p>
+                  ${p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? `<p style="font-size: 12px; color: #888;">Tags: ${p.tags.join(', ')}</p>` : ''}
+                </li>
+              `).join('')}
+            </ul>
+            <p><a href="/">Back to Home</a> | <a href="/llms.txt">View AI-readable content</a></p>
+          </main>
+        `;
+      } else {
+        staticContent = `
+          <main style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: system-ui, sans-serif;">
+            <h1>Projects by Clyde Tadiwa</h1>
+            <p>${description}</p>
+            <ul style="list-style: none; padding: 0;">
+              ${items.map(p => `
+                <li style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #eee;">
+                  <h2><a href="/projects/${p.id}" style="color: #0066cc; text-decoration: none;">${p.title}</a></h2>
+                  <p>${p.shortDescription || ''}</p>
+                  ${p.technologies && Array.isArray(p.technologies) ? `<p style="font-size: 12px; color: #888;">Technologies: ${p.technologies.join(', ')}</p>` : ''}
+                  ${p.liveUrl ? `<p><a href="${p.liveUrl}" target="_blank">View Live Demo</a></p>` : ''}
+                </li>
+              `).join('')}
+            </ul>
+            <p><a href="/">Back to Home</a> | <a href="/llms.txt">View AI-readable content</a></p>
+          </main>
+        `;
+      }
+
+      // Inject content into body for crawlers (React will replace this when JS loads)
       let html = template.replace('<!--HEAD_INJECTION-->', headInjection);
-      html = html.replace('<div id="root"></div>', `<div id="root"></div><noscript>${noscriptContent}</noscript>`);
+      // Put static content INSIDE the root div - React will hydrate/replace it
+      html = html.replace('<div id="root"></div>', `<div id="root">${staticContent}</div>`);
 
       res.send(html);
     } catch (error) {
