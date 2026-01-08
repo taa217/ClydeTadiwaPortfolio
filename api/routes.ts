@@ -253,10 +253,11 @@ export async function registerRoutes(app: Express): Promise<void> { // Corrected
 
       if (isBot) {
         console.log(`[SSR] Bot detected (${userAgent}), serving static HTML only`);
-        // Remove the main script module to prevent hydration
-        html = html.replace(/<script type="module" src="\/src\/main.tsx"><\/script>/g, '');
-        // Also remove other script tags that might load JS chunks
-        html = html.replace(/<script type="module" crossorigin src="\/assets\/[^"]+"><\/script>/g, '');
+        // Remove the main script module to prevent hydration (handle both dev and prod paths)
+        // Matches src="/src/main.tsx", src="assets/...", src="/assets/..."
+        html = html.replace(/<script type="module"[^>]*src="[^"]+"[^>]*><\/script>/g, '');
+        // Remove any other module scripts
+        html = html.replace(/<script type="module"[^>]*>.*?<\/script>/gs, '');
         // Keep CSS links as they are needed for styling
       }
 
