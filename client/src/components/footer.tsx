@@ -15,7 +15,7 @@ export default function Footer() {
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("/api/subscribe", {
         method: "POST",
@@ -38,7 +38,7 @@ export default function Footer() {
         });
       }
     } catch (error) {
-      
+
       console.error('Subscription error:', error);
       toast({
         title: 'Subscription Failed',
@@ -60,10 +60,10 @@ export default function Footer() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-			<h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
-				<img src="/assets/favicon-ct.svg" alt="" aria-hidden="true" className="h-6 w-6 rounded-md" />
-				<span>Clyde Tadiwa</span>
-			</h3>
+            <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
+              <img src="/assets/favicon-ct.svg" alt="" aria-hidden="true" className="h-6 w-6 rounded-md" />
+              <span>Clyde Tadiwa</span>
+            </h3>
             <p className="text-muted-foreground">
               Building innovative technology solutions that make a difference.
             </p>
@@ -87,11 +87,11 @@ export default function Footer() {
               <li>
                 <Link href="/blog">
                   <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Thoughts
+                    Thought
                   </a>
                 </Link>
               </li>
-             
+
             </ul>
           </motion.div>
 
